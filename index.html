@@ -395,12 +395,11 @@
 /* ===========================
    CONFIG SUPABASE
 =========================== */
-const SUPABASE_URL = "https://jqczxqnvdaubpkwesbkw.supabase.co";
+const SUPABASE_URL = "https://jqczxqnvdaubpkwesbkw.supabaseClient.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxY3p4cW52ZGF1YnBrd2VzYmt3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2NzQsImV4cCI6MjA4NjU3ODY3NH0.WKJ92FmjOBWUeXyMry82q4Z-Pd1lbutmtSTIIOV4tSY";
 const ADMIN_EMAIL = "saphira.fujur@gmail.com";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+const supabaseClient = window.supabaseClient.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 /* ===========================
    DATOS Y CONSTANTES
 =========================== */
@@ -676,10 +675,10 @@ async function saveBook() {
   try {
     let result;
     if (editingBookId) {
-      result = await supabase.from('books').update(bookPayload).eq('id', editingBookId);
+      result = await supabaseClient.from('books').update(bookPayload).eq('id', editingBookId);
     } else {
       // user_id se rellena con el usuario logueado (RLS)
-      result = await supabase.from('books').insert(bookPayload);
+      result = await supabaseClient.from('books').insert(bookPayload);
     }
 
     if (result.error) {
@@ -735,7 +734,7 @@ async function deleteBook(id) {
   if (!isAdmin) return;
   if (!confirm("¿Eliminar este libro?")) return;
 
-  const { error } = await supabase.from('books').delete().eq('id', id);
+  const { error } = await supabaseClient.from('books').delete().eq('id', id);
   if (error) {
     console.error(error);
     showToast("❌ Error al eliminar");
@@ -1130,19 +1129,19 @@ function closeAuthModal() {
 }
 
 async function login(email, password) {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
   if (error) return { ok: false, msg: error.message };
   return { ok: true, data };
 }
 
 async function register(email, password) {
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabaseClient.auth.signUp({ email, password });
   if (error) return { ok: false, msg: error.message };
   return { ok: true, data };
 }
 
 async function resetPassword(email) {
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
     redirectTo: "https://saphira-fujur.github.io/bookflix/"
   });
   if (error) return { ok: false, msg: error.message };
@@ -1150,7 +1149,7 @@ async function resetPassword(email) {
 }
 
 async function logout() {
-  await supabase.auth.signOut();
+  await supabaseClient.auth.signOut();
 }
 
 /* ===========================
@@ -1230,7 +1229,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Detectar sesión
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await supabaseClient.auth.getSession();
 
   const email = session?.user?.email || null;
   isAdmin = !!email && (email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
@@ -1249,7 +1248,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await refreshAll();
 
   // Reaccionar a cambios de auth
-  supabase.auth.onAuthStateChange(async (_event, sessionNow) => {
+  supabaseClient.auth.onAuthStateChange(async (_event, sessionNow) => {
     const emailNow = sessionNow?.user?.email || null;
     isAdmin = !!emailNow && (emailNow.toLowerCase() === ADMIN_EMAIL.toLowerCase());
     toggleAdminUI(isAdmin);
