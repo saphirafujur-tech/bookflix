@@ -12,8 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 
   <!-- Supabase JS (UMD) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <style>
     * { font-family: 'Montserrat', sans-serif; }
     html, body { height: 100%; margin: 0; padding: 0; }
@@ -395,12 +394,12 @@
 /* ===========================
    CONFIG SUPABASE
 =========================== */
-const SUPABASE_URL = "https://jqczxqnvdaubpkwesbkw.supabaseClient.co";
+const SUPABASE_URL = "https://jqczxqnvdaubpkwesbkw.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxY3p4cW52ZGF1YnBrd2VzYmt3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2NzQsImV4cCI6MjA4NjU3ODY3NH0.WKJ92FmjOBWUeXyMry82q4Z-Pd1lbutmtSTIIOV4tSY";
 const ADMIN_EMAIL = "saphira.fujur@gmail.com";
 
-const supabaseClient = window.supabaseClient.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-/* ===========================
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  /* ===========================
    DATOS Y CONSTANTES
 =========================== */
 const BINGO_CHALLENGES = [
