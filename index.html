@@ -635,6 +635,12 @@ if (window.location.hash === "#admin") {
           pace: row.pace || 0,
           review: row.review || "",
           quote: row.quote || ""
+          start_date: row.start_date || "",
+end_date: row.end_date || "",
+start_quote: row.start_quote || "",
+end_quote: row.end_quote || "",
+cover_url: row.cover_url || "",
+canva_url: row.canva_url || ""
         }));
       }
 
@@ -658,6 +664,12 @@ if (window.location.hash === "#admin") {
         pace: book.pace,
         review: book.review,
         quote: book.quote
+        start_date: book.start_date,
+end_date: book.end_date,
+start_quote: book.start_quote,
+end_quote: book.end_quote,
+cover_url: book.cover_url,
+canva_url: book.canva_url
       };
 
       const { error } = await supabaseClient.from("books").insert(payload);
@@ -686,6 +698,12 @@ if (window.location.hash === "#admin") {
         pace: book.pace,
         review: book.review,
         quote: book.quote
+        start_date: book.start_date,
+end_date: book.end_date,
+start_quote: book.start_quote,
+end_quote: book.end_quote,
+cover_url: book.cover_url,
+canva_url: book.canva_url
       };
 
       const { error } = await supabaseClient.from("books").update(payload).eq("id", id);
