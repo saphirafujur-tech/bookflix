@@ -89,7 +89,7 @@
 <div class="mt-6 flex items-center justify-center gap-3">
   <button id="adminBtn"
     style="display:none;"
-    onclick="openAdminModal()">
+    onclick="openAdminModal();">
     🔒 Admin
   </button>
 
@@ -494,7 +494,7 @@
        ADMIN MODAL
     ========================== */
 
-    function openAdminModal() {
+    function openAdminModal(); {
       document.getElementById("adminModalBackdrop").style.display = "flex";
       document.getElementById("adminError").style.display = "none";
     }
@@ -1246,6 +1246,10 @@ if (window.location.hash === "#admin") {
       }
 
       applyAdminUI();
+      // Si entras por URL con #admin, abre el modal automáticamente
+if (window.location.hash === "#admin" && !isAdmin) {
+  openAdminModal();
+}
       await loadBooksFromSupabase();
     });
   </script>
