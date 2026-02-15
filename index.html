@@ -270,6 +270,36 @@
                 <label class="block mb-2 font-semibold" style="color: #fff;">Fecha de lectura</label>
                 <input type="date" id="bookDate" class="editable-field" style="color: #ccc;">
               </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  <div>
+    <label class="block mb-2 font-semibold" style="color: #fff;">📅 Fecha inicio</label>
+    <input type="date" id="bookStartDate" class="editable-field" style="color: #ccc;">
+  </div>
+  <div>
+    <label class="block mb-2 font-semibold" style="color: #fff;">🏁 Fecha final</label>
+    <input type="date" id="bookEndDate" class="editable-field" style="color: #ccc;">
+  </div>
+</div>
+
+<div>
+  <label class="block mb-2 font-semibold" style="color: #fff;">✨ Frase del inicio</label>
+  <textarea id="bookStartQuote" class="editable-field" style="color: #ccc;" placeholder="Primera frase o frase inicial..."></textarea>
+</div>
+
+<div>
+  <label class="block mb-2 font-semibold" style="color: #fff;">🌙 Frase final</label>
+  <textarea id="bookEndQuote" class="editable-field" style="color: #ccc;" placeholder="Última frase o frase final..."></textarea>
+</div>
+
+<div>
+  <label class="block mb-2 font-semibold" style="color: #fff;">🖼️ Portada (URL)</label>
+  <input type="url" id="bookCoverUrl" class="editable-field" style="color: #ccc;" placeholder="https://...jpg/png">
+</div>
+
+<div>
+  <label class="block mb-2 font-semibold" style="color: #fff;">🔗 Enlace resumen Canva</label>
+  <input type="url" id="bookCanvaUrl" class="editable-field" style="color: #ccc;" placeholder="https://www.canva.com/design/...">
+</div>
 
               <div>
                 <label class="block mb-2 font-semibold" style="color: #fff;">Desafío del Bingo</label>
@@ -770,6 +800,12 @@ canva_url: book.canva_url
     }
 
     function clearBookForm() {
+      document.getElementById('bookStartDate').value = '';
+document.getElementById('bookEndDate').value = '';
+document.getElementById('bookStartQuote').value = '';
+document.getElementById('bookEndQuote').value = '';
+document.getElementById('bookCoverUrl').value = '';
+document.getElementById('bookCanvaUrl').value = '';
       document.getElementById('bookTitle').value = '';
       document.getElementById('bookAuthor').value = '';
       document.getElementById('bookGenre').value = '';
@@ -807,6 +843,12 @@ canva_url: book.canva_url
         genre: document.getElementById('bookGenre').value,
         pages: parseInt(document.getElementById('bookPages').value) || 0,
         date: document.getElementById('bookDate').value,
+        start_date: document.getElementById('bookStartDate').value,
+end_date: document.getElementById('bookEndDate').value,
+start_quote: document.getElementById('bookStartQuote').value,
+end_quote: document.getElementById('bookEndQuote').value,
+cover_url: document.getElementById('bookCoverUrl').value,
+canva_url: document.getElementById('bookCanvaUrl').value,
         bingoIds: selectedBingoIds,
         rating: parseFloat(document.getElementById('bookRating').value) || 0,
         plot: parseFloat(document.getElementById('bookPlot').value) || 0,
@@ -845,6 +887,12 @@ canva_url: book.canva_url
       document.getElementById('bookGenre').value = book.genre || '';
       document.getElementById('bookPages').value = book.pages || '';
       document.getElementById('bookDate').value = book.date || '';
+      document.getElementById('bookStartDate').value = book.start_date || '';
+document.getElementById('bookEndDate').value = book.end_date || '';
+document.getElementById('bookStartQuote').value = book.start_quote || '';
+document.getElementById('bookEndQuote').value = book.end_quote || '';
+document.getElementById('bookCoverUrl').value = book.cover_url || '';
+document.getElementById('bookCanvaUrl').value = book.canva_url || '';
       document.getElementById('bookRating').value = book.rating || '';
       document.getElementById('bookPlot').value = book.plot || '';
       document.getElementById('bookCharacters').value = book.characters || '';
