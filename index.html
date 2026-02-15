@@ -85,24 +85,23 @@
         <h1 id="appTitle" class="text-6xl sm:text-8xl font-bold mb-2" style="color: #e50914; text-shadow: 0 0 20px rgba(229,9,20,0.5);">🎬 BOOKFLIX</h1>
         <p id="appSubtitle" class="text-xl sm:text-2xl" style="color: #fff;">Tu biblioteca personal 2026 📚</p>
 
-        <!-- Admin button -->
-        <div class="mt-6 flex items-center justify-center gap-3">
-          <button id="adminBtn"
-            class="px-5 py-2 rounded-lg font-bold"
-            style="background:#333;color:#fff;border:1px solid #444;"
-            onclick="openAdminModal()">
-            🔒 Admin
-          </button>
+        <!-- Admin button (OCULTO) -->
+<div class="mt-6 flex items-center justify-center gap-3">
+  <button id="adminBtn"
+    style="display:none;"
+    onclick="openAdminModal()">
+    🔒 Admin
+  </button>
 
-          <button id="logoutBtn"
-            class="px-5 py-2 rounded-lg font-bold"
-            style="background:#e50914;color:#fff;display:none;"
-            onclick="logout()">
-            🚪 Cerrar sesión
-          </button>
+  <button id="logoutBtn"
+    class="px-5 py-2 rounded-lg font-bold"
+    style="background:#e50914;color:#fff;display:none;"
+    onclick="logout()">
+    🚪 Cerrar sesión
+  </button>
 
-          <span id="adminStatus" class="text-sm" style="color:#aaa;"></span>
-        </div>
+  <span id="adminStatus" class="text-sm" style="color:#aaa;"></span>
+</div>
       </header>
 
       <!-- Main Content -->
@@ -544,6 +543,10 @@
         isAdmin = true;
         closeAdminModal();
         applyAdminUI();
+        // Si la URL termina en #admin, abre el modal
+if (window.location.hash === "#admin") {
+  openAdminModal();
+}
         await loadBooksFromSupabase();
       } catch (e) {
         showAdminError("Error inesperado al iniciar sesión.");
@@ -556,6 +559,10 @@
       isAdmin = false;
       currentUserEmail = null;
       applyAdminUI();
+      // Si la URL termina en #admin, abre el modal
+if (window.location.hash === "#admin") {
+  openAdminModal();
+}
       await loadBooksFromSupabase();
     }
 
