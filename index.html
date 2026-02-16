@@ -658,8 +658,21 @@
           genre: row.genre || "",
           pages: row.pages || 0,
           date: row.date || "",
-          bingoIds: row.bingo_ids || [],
-          rating: row.rating || 0,
+bingoIds: (() => {
+  if (!row.bingo_ids) return [];
+  if (Array.isArray(row.bingo_ids)) return row.bingo_ids;
+
+  if (typeof row.bingo_ids === "string") {
+    // Puede venir como JSON "[\"1\",\"2\"]" o como "1,2"
+    try {
+      const parsed = JSON.parse(row.bingo_ids);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (e) {}
+    return row.bingo_ids.split(",").map(x => x.trim()).filter(Boolean);
+  }
+
+  return [];
+})(),          rating: row.rating || 0,
           plot: row.plot || 0,
           characters: row.characters || 0,
           writing: row.writing || 0,
