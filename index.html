@@ -1374,20 +1374,18 @@
 
       const { data } = await supabaseClient.auth.getSession();
       const email = data.session?.user?.email || null;
-
-      if (email && email === ADMIN_EMAIL) {
-        isAdmin = true;
-        currentUserEmail = email;
-      } else {
-        isAdmin = false;
-        currentUserEmail = null;
-      }
-
-      applyAdminUI();
-
-      if (window.location.hash === "#admin" && !isAdmin) {
-        openAdminModal();
-      }
+      
+      isAdmin = (email === ADMIN_EMAIL);
+currentUserEmail = email;
+applyAdminUI();
+      
+      supabaseClient.auth.onAuthStateChange((_event, session) => {
+  const email = session?.user?.email || null;
+        
+  isAdmin = (email === ADMIN_EMAIL);
+  currentUserEmail = email;
+  applyAdminUI();
+});
 
       await loadBooksFromSupabase();
     });
