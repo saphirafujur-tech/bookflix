@@ -1011,11 +1011,13 @@
         const stars = '⭐'.repeat(Math.floor(book.rating || 0));
 
         const bingoTags = (book.bingoIds || []).map(id => {
-          const challenge = BINGO_CHALLENGES.find(c => c.id === id);
-          return challenge
-            ? `<span class="px-3 py-1 rounded-full text-sm" style="background: #e50914; color: #fff;">${challenge.icon} ${challenge.text}</span>`
-            : '';
-        }).join('');
+          const safeBingoIds = Array.isArray(book.bingoIds)
+  ? book.bingoIds
+  : (typeof book.bingoIds === "string"
+      ? book.bingoIds.split(",").map(x => x.trim()).filter(Boolean)
+      : []);
+
+const bingoTags = safeBingoIds.map(id => {
 
         const coverHtml = book.cover_url
           ? `<img src="${escapeAttr(book.cover_url)}" alt="Portada" class="w-24 h-36 object-cover rounded-lg border border-[#333]">`
