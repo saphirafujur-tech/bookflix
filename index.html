@@ -651,42 +651,47 @@
         console.error("Error cargando books:", error);
         appData.books = [];
       } else {
-        appData.books = (data || []).map(row => ({
-          id: row.id,
-          title: row.title || "",
-          author: row.author || "",
-          genre: row.genre || "",
-          pages: row.pages || 0,
-          date: row.date || "",
-bingoIds: (() => {
-  if (!row.bingo_ids) return [];
-  if (Array.isArray(row.bingo_ids)) return row.bingo_ids;
+        appData.books = (data || []).map(row => {
+  let bingoIds = [];
 
-  if (typeof row.bingo_ids === "string") {
-    // Puede venir como JSON "[\"1\",\"2\"]" o como "1,2"
+  if (Array.isArray(row.bingo_ids)) {
+    bingoIds = row.bingo_ids;
+  } else if (typeof row.bingo_ids === "string") {
+    // Puede venir como JSON o como texto "1,2,3"
     try {
       const parsed = JSON.parse(row.bingo_ids);
-      if (Array.isArray(parsed)) return parsed;
-    } catch (e) {}
-    return row.bingo_ids.split(",").map(x => x.trim()).filter(Boolean);
+      if (Array.isArray(parsed)) bingoIds = parsed;
+    } catch (e) {
+      bingoIds = row.bingo_ids.split(",").map(x => x.trim()).filter(Boolean);
+    }
   }
 
-  return [];
-})(),          rating: row.rating || 0,
-          plot: row.plot || 0,
-          characters: row.characters || 0,
-          writing: row.writing || 0,
-          pace: row.pace || 0,
-          review: row.review || "",
-          quote: row.quote || "",
+  return {
+    id: row.id,
+    title: row.title || "",
+    author: row.author || "",
+    genre: row.genre || "",
+    pages: row.pages || 0,
+    date: row.date || "",
 
-          start_date: row.start_date || "",
-          end_date: row.end_date || "",
-          start_quote: row.start_quote || "",
-          end_quote: row.end_quote || "",
-          cover_url: row.cover_url || "",
-          canva_url: row.canva_url || ""
-        }));
+    start_date: row.start_date || "",
+    end_date: row.end_date || "",
+    start_quote: row.start_quote || "",
+    end_quote: row.end_quote || "",
+    cover_url: row.cover_url || "",
+    canva_url: row.canva_url || "",
+
+    bingoIds: bingoIds,
+
+    rating: row.rating || 0,
+    plot: row.plot || 0,
+    characters: row.characters || 0,
+    writing: row.writing || 0,
+    pace: row.pace || 0,
+    review: row.review || "",
+    quote: row.quote || ""
+  };
+});
       }
 
       recalcBingo();
