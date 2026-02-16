@@ -230,7 +230,18 @@
           </div>
         </section>
 
-        <!-- Mi Biblioteca -->
+        
+        <!-- Reto A-Z -->
+        <section class="mb-12">
+          <h2 class="text-4xl sm:text-5xl font-bold mb-6" style="color:#fff;">🔤 Reto A-Z</h2>
+          <p class="mb-6" style="color:#aaa;">Coloca un libro por cada letra del abecedario (según el título). Se completa automáticamente con tus libros guardados.</p>
+
+          <div class="stat-card">
+            <div id="azGrid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3"></div>
+          </div>
+        </section>
+
+<!-- Mi Biblioteca -->
         <section class="mb-12">
           <h2 class="text-4xl sm:text-5xl font-bold mb-6" style="color: #fff;">📚 Mi Biblioteca</h2>
 
@@ -272,6 +283,7 @@
                     <option value="Teatro">Teatro</option>
                     <option value="Otro">Otro</option>
                   </select>
+                  <input type="text" id="bookGenreCustom" class="editable-field mt-3" style="color:#ccc; display:none;" placeholder="Escribe tu género personalizado (ej: Vampiros, Cozy crime...)">
                 </div>
 
                 <div>
@@ -651,47 +663,40 @@
         console.error("Error cargando books:", error);
         appData.books = [];
       } else {
-        appData.books = (data || []).map(row => {
-  let bingoIds = [];
+        appData.books = (data || []).map(row => ({
+          id: row.id,
+          title: row.title || "",
+          author: row.author || "",
+          genre: row.genre || "",
+          pages: row.pages || 0,
+          date: row.date || "",
+          bingoIds: (() => {
+            const v = row.bingo_ids;
+            if (Array.isArray(v)) return v.map(String);
+            if (typeof v === "string") {
+              try {
+                const parsed = JSON.parse(v);
+                if (Array.isArray(parsed)) return parsed.map(String);
+              } catch (e) {}
+              return v.split(",").map(x => x.trim()).filter(Boolean);
+            }
+            return [];
+          })(),
+          rating: row.rating || 0,
+          plot: row.plot || 0,
+          characters: row.characters || 0,
+          writing: row.writing || 0,
+          pace: row.pace || 0,
+          review: row.review || "",
+          quote: row.quote || "",
 
-  if (Array.isArray(row.bingo_ids)) {
-    bingoIds = row.bingo_ids;
-  } else if (typeof row.bingo_ids === "string") {
-    // Puede venir como JSON o como texto "1,2,3"
-    try {
-      const parsed = JSON.parse(row.bingo_ids);
-      if (Array.isArray(parsed)) bingoIds = parsed;
-    } catch (e) {
-      bingoIds = row.bingo_ids.split(",").map(x => x.trim()).filter(Boolean);
-    }
-  }
-
-  return {
-    id: row.id,
-    title: row.title || "",
-    author: row.author || "",
-    genre: row.genre || "",
-    pages: row.pages || 0,
-    date: row.date || "",
-
-    start_date: row.start_date || "",
-    end_date: row.end_date || "",
-    start_quote: row.start_quote || "",
-    end_quote: row.end_quote || "",
-    cover_url: row.cover_url || "",
-    canva_url: row.canva_url || "",
-
-    bingoIds: bingoIds,
-
-    rating: row.rating || 0,
-    plot: row.plot || 0,
-    characters: row.characters || 0,
-    writing: row.writing || 0,
-    pace: row.pace || 0,
-    review: row.review || "",
-    quote: row.quote || ""
-  };
-});
+          start_date: row.start_date || "",
+          end_date: row.end_date || "",
+          start_quote: row.start_quote || "",
+          end_quote: row.end_quote || "",
+          cover_url: row.cover_url || "",
+          canva_url: row.canva_url || ""
+        }));
       }
 
       recalcBingo();
@@ -797,7 +802,57 @@
       }
     }
 
-    function initBingoCheckboxes() {
+    
+    function initAZChallenge() {
+      const grid = document.getElementById("azGrid");
+      if (!grid) return;
+
+      const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+      const byLetter = {};
+
+      (appData.books || []).forEach(b => {
+        const t = (b.title || "").trim();
+        if (!t) return;
+        const first = t[0].toUpperCase();
+        if (!/^[A-Z]$/.test(first)) return;
+        if (!byLetter[first]) byLetter[first] = b;
+      });
+
+      grid.innerHTML = letters.map(L => {
+        const book = byLetter[L];
+        return `
+          <div class="p-3 rounded-xl border" style="border-color:#333;background:#1a1a1a;">
+            <div class="text-2xl font-bold mb-1" style="color:#e50914;">${L}</div>
+            ${book ? `
+              <div class="text-sm font-bold" style="color:#fff;">${escapeHtml(book.title)}</div>
+              <div class="text-xs mt-1" style="color:#aaa;">${escapeHtml(book.author || "")}</div>
+            ` : `
+              <div class="text-sm" style="color:#666;">(vacío)</div>
+            `}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function setupGenreCustom() {
+      const sel = document.getElementById("bookGenre");
+      const custom = document.getElementById("bookGenreCustom");
+      if (!sel || !custom) return;
+
+      function sync() {
+        if (sel.value === "Otro") {
+          custom.style.display = "block";
+        } else {
+          custom.style.display = "none";
+          custom.value = "";
+        }
+      }
+
+      sel.addEventListener("change", sync);
+      sync();
+    }
+
+function initBingoCheckboxes() {
       const container = document.getElementById('bingoCheckboxes');
       container.innerHTML = BINGO_CHALLENGES.map(challenge => `
         <label class="flex items-center gap-2 cursor-pointer p-2 rounded" style="margin: 0;">
@@ -832,6 +887,8 @@
       document.getElementById('bookTitle').value = '';
       document.getElementById('bookAuthor').value = '';
       document.getElementById('bookGenre').value = '';
+      const gc = document.getElementById('bookGenreCustom');
+      if (gc) { gc.value = ''; gc.style.display = 'none'; }
       document.getElementById('bookPages').value = '';
       document.getElementById('bookDate').value = '';
       document.getElementById('bookRating').value = '';
@@ -863,7 +920,9 @@
       const book = {
         title,
         author,
-        genre: document.getElementById('bookGenre').value,
+        genre: (document.getElementById('bookGenre').value === "Otro"
+          ? (document.getElementById('bookGenreCustom').value.trim() || "Otro")
+          : document.getElementById('bookGenre').value),
         pages: parseInt(document.getElementById('bookPages').value) || 0,
         date: document.getElementById('bookDate').value,
 
@@ -910,7 +969,17 @@
 
       document.getElementById('bookTitle').value = book.title;
       document.getElementById('bookAuthor').value = book.author;
-      document.getElementById('bookGenre').value = book.genre || '';
+      const genreSel = document.getElementById('bookGenre');
+      const genreCustom = document.getElementById('bookGenreCustom');
+      const knownGenres = Array.from(genreSel.options).map(o => o.value);
+      if (book.genre && !knownGenres.includes(book.genre)) {
+        genreSel.value = 'Otro';
+        if (genreCustom) genreCustom.value = book.genre;
+      } else {
+        genreSel.value = book.genre || '';
+        if (genreCustom) genreCustom.value = '';
+      }
+
       document.getElementById('bookPages').value = book.pages || '';
       document.getElementById('bookDate').value = book.date || '';
 
@@ -1029,13 +1098,11 @@
         const stars = '⭐'.repeat(Math.floor(book.rating || 0));
 
         const bingoTags = (book.bingoIds || []).map(id => {
-          const safeBingoIds = Array.isArray(book.bingoIds)
-  ? book.bingoIds
-  : (typeof book.bingoIds === "string"
-      ? book.bingoIds.split(",").map(x => x.trim()).filter(Boolean)
-      : []);
-
-const bingoTags = safeBingoIds.map(id => {
+          const challenge = BINGO_CHALLENGES.find(c => c.id === id);
+          return challenge
+            ? `<span class="px-3 py-1 rounded-full text-sm" style="background: #e50914; color: #fff;">${challenge.icon} ${challenge.text}</span>`
+            : '';
+        }).join('');
 
         const coverHtml = book.cover_url
           ? `<img src="${escapeAttr(book.cover_url)}" alt="Portada" class="w-24 h-36 object-cover rounded-lg border border-[#333]">`
@@ -1364,6 +1431,7 @@ const bingoTags = safeBingoIds.map(id => {
 
     function initAllUI() {
       initShelf();
+      initAZChallenge();
       initBingoGrid();
       initAchievements();
       initGoals();
@@ -1391,21 +1459,24 @@ const bingoTags = safeBingoIds.map(id => {
 
     document.addEventListener('DOMContentLoaded', async () => {
       applyAdminUI();
+      setupGenreCustom();
 
       const { data } = await supabaseClient.auth.getSession();
       const email = data.session?.user?.email || null;
-      
-      isAdmin = (email === ADMIN_EMAIL);
-currentUserEmail = email;
-applyAdminUI();
-      
-      supabaseClient.auth.onAuthStateChange((_event, session) => {
-  const email = session?.user?.email || null;
-        
-  isAdmin = (email === ADMIN_EMAIL);
-  currentUserEmail = email;
-  applyAdminUI();
-});
+
+      if (email && email === ADMIN_EMAIL) {
+        isAdmin = true;
+        currentUserEmail = email;
+      } else {
+        isAdmin = false;
+        currentUserEmail = null;
+      }
+
+      applyAdminUI();
+
+      if (window.location.hash === "#admin" && !isAdmin) {
+        openAdminModal();
+      }
 
       await loadBooksFromSupabase();
     });
