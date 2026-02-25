@@ -1167,22 +1167,11 @@ function initBingoCheckboxes() {
 
 
         const bingoTags = (book.bingoIds || []).map(id => {
-          const safeBingoIds = Array.isArray(book.bingoIds)
-  ? book.bingoIds
-  : (typeof book.bingoIds === "string"
-      ? book.bingoIds.split(",").map(x => x.trim()).filter(Boolean)
-      : []);
-
-const bingoTags = safeBingoIds.map(id => {
-  const challenge = BINGO_CHALLENGES.find(c => c.id === id);
-  if (!challenge) return '';
-  return `
-    <span class="px-2 py-1 rounded-full text-xs"
-      style="background:#333;color:#fff;">
-      ${challenge.icon} ${challenge.text}
-    </span>
-  `;
-}).join('');
+          const challenge = BINGO_CHALLENGES.find(c => c.id === id);
+          return challenge
+            ? `<span class="px-3 py-1 rounded-full text-sm" style="background: #e50914; color: #fff;">${challenge.icon} ${challenge.text}</span>`
+            : '';
+        }).join('');
 
         const coverHtml = book.cover_url
           ? `<img src="${escapeAttr(book.cover_url)}" alt="Portada" class="w-24 h-36 object-cover rounded-lg border border-[#333]">`
