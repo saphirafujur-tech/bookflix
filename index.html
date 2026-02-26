@@ -1567,6 +1567,22 @@ function initBingoCheckboxes() {
       await loadBooksFromSupabase();
     });
   </script>
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyB9HfOE1_Ow0kRgULnq_AtNxxvU5W13W7s",
+    authDomain: "bookflix-1c78e.firebaseapp.com",
+    projectId: "bookflix-1c78e",
+    storageBucket: "bookflix-1c78e.firebasestorage.app",
+    messagingSenderId: "290289108854",
+    appId: "1:290289108854:web:4585c29feeab7ac2ccdc57"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
 </body>
 </html>
