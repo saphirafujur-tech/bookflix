@@ -507,24 +507,7 @@
   </div>
 
   <script>
-   <!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
-<script>
-const firebaseConfig = {
-  apiKey: "TU_APIKEY",
-  authDomain: "TU_AUTHDOMAIN",
-  projectId: "TU_PROJECTID",
-  storageBucket: "TU_BUCKET",
-  messagingSenderId: "TU_ID",
-  appId: "TU_APPID"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
- console.log("🔥 Firebase conectado correctamente"); 
-</script>
+  
   /* =========================
        CONSTANTES APP
     ========================== */
@@ -1575,11 +1558,13 @@ function initBingoCheckboxes() {
       await loadBooksFromSupabase();
     });
   </script>
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script>
+if (!firebase.apps.length) {
+
   const firebaseConfig = {
     apiKey: "AIzaSyB9HfOE1_Ow0kRgULnq_AtNxxvU5W13W7s",
     authDomain: "bookflix-1c78e.firebaseapp.com",
@@ -1590,7 +1575,15 @@ function initBingoCheckboxes() {
   };
 
   firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+}
+
+const db = firebase.firestore();
+
+console.log("🔥 Firebase conectado correctamente");
+</script>
+
+<script>
+ 
 </script>
 </body>
 </html>
