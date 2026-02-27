@@ -507,17 +507,24 @@
   </div>
 
   <script>
-    /* =========================
-       CONFIG SUPABASE
-    ========================== */
+   <!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-    const SUPABASE_URL = "https://jqczxqnvdaubpkwesbkw.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxY3p4cW52ZGF1YnBrd2VzYmt3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2NzQsImV4cCI6MjA4NjU3ODY3NH0.WKJ92FmjOBWUeXyMry82q4Z-Pd1lbutmtSTIIOV4tSY";
-    const ADMIN_EMAIL = "saphira.fujur@gmail.com";
+<script>
+const firebaseConfig = {
+  apiKey: "TU_APIKEY",
+  authDomain: "TU_AUTHDOMAIN",
+  projectId: "TU_PROJECTID",
+  storageBucket: "TU_BUCKET",
+  messagingSenderId: "TU_ID",
+  appId: "TU_APPID"
+};
 
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    /* =========================
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+</script>
+  /* =========================
        CONSTANTES APP
     ========================== */
 
