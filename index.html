@@ -650,7 +650,7 @@
       isAdmin = false;
       currentUserEmail = null;
       applyAdminUI();
-      await loadBooksFromSupabase();
+     // await loadBooksFromSupabase();
     }
 
     async function resetPassword() {
@@ -1534,28 +1534,14 @@ function initBingoCheckboxes() {
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
-      applyAdminUI();
-      setupGenreCustom();
 
-      const { data } = await supabaseClient.auth.getSession();
-      const email = data.session?.user?.email || null;
+  applyAdminUI();
+  setupGenreCustom();
 
-      if (email && email === ADMIN_EMAIL) {
-        isAdmin = true;
-        currentUserEmail = email;
-      } else {
-        isAdmin = false;
-        currentUserEmail = null;
-      }
+  // 🔥 SIN SUPABASE
+  initAllUI();
 
-      applyAdminUI();
-
-      if (window.location.hash === "#admin" && !isAdmin) {
-        openAdminModal();
-      }
-
-      await loadBooksFromSupabase();
-    });
+});
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
