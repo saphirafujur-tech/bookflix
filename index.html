@@ -18,6 +18,7 @@
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -31,22 +32,45 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
 
 let appData = { books: [] };
 
-async function loadBooksFromFirebase(){
-  const snap = await db.collection("books").orderBy("created_at","desc").get();
-  appData.books = snap.docs.map(d=>({id:d.id,...d.data()}));
-  render();
-}
+async function login() {
 
-async function addDemo(){
-  await db.collection("books").add({
-    title:"Libro prueba",
-    author:"Noemí",
-    created_at:new Date()
-  });
-  loadBooksFromFirebase();
+  const email = document.getElementById("adminEmail").value.trim();
+  const password = document.getElementById("adminPassword").value.trim();
+
+  if (!email || !password) {
+    showAdminError("Completa email y contraseña");
+    return;
+  }
+
+  try {
+
+    const userCredential =
+      await auth.signInWithEmailAndPassword(email, password);
+
+    isAdmin = true;
+    currentUserEmail = userCredential.user.email;
+
+    closeAdminModal();
+    applyAdminUI();
+
+    console.log("✅ Admin logueada:", currentUserEmail);
+
+  } catch (error) {
+    console.error(error);
+    showAdminError("Login incorrecto");
+  }
+}
+async function logout() {
+  await auth.signOut();
+
+  isAdmin = false;
+  currentUserEmail = null;
+
+  applyAdminUI();
 }
 
 function render(){
@@ -64,6 +88,18 @@ function render(){
 
 document.addEventListener("DOMContentLoaded",loadBooksFromFirebase);
 </script>
+auth.onAuthStateChanged(user => {
+
+  if (user) {
+    isAdmin = true;
+    currentUserEmail = user.email;
+  } else {
+    isAdmin = false;
+    currentUserEmail = null;
+  }
+
+  applyAdminUI();
+});
 
 </body>
 </html>
