@@ -16,9 +16,10 @@
 </div>
 
 <!-- FIREBASE -->
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -31,65 +32,11 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-let appData = { books: [] };
-
-async function login() {
-
-  const email = document.getElementById("adminEmail").value.trim();
-  const password = document.getElementById("adminPassword").value.trim();
-
-  if (!email || !password) {
-    showAdminError("Completa email y contraseña");
-    return;
-  }
-
-  try {
-
-    const userCredential =
-      await auth.signInWithEmailAndPassword(email, password);
-
-    isAdmin = true;
-    currentUserEmail = userCredential.user.email;
-
-    closeAdminModal();
-    applyAdminUI();
-
-    console.log("✅ Admin logueada:", currentUserEmail);
-
-  } catch (error) {
-    console.error(error);
-    showAdminError("Login incorrecto");
-  }
-}
-async function logout() {
-  await auth.signOut();
-
-  isAdmin = false;
-  currentUserEmail = null;
-
-  applyAdminUI();
-}
-
-function render(){
-  const c=document.getElementById("books");
-  if(!appData.books.length){
-    c.innerHTML="<p>No hay libros aún</p>";
-    return;
-  }
-  c.innerHTML=appData.books.map(b=>`
-    <div style="background:#1a1a1a;padding:15px;margin-top:10px;border-radius:10px">
-      <b>${b.title}</b><br>${b.author}
-    </div>
-  `).join("");
-}
-
-document.addEventListener("DOMContentLoaded",loadBooksFromFirebase);
-</script>
 auth.onAuthStateChanged(user => {
-
   if (user) {
     isAdmin = true;
     currentUserEmail = user.email;
@@ -97,9 +44,11 @@ auth.onAuthStateChanged(user => {
     isAdmin = false;
     currentUserEmail = null;
   }
-
   applyAdminUI();
 });
+
+console.log("🔥 Firebase OK");
+</script>
 
 </body>
 </html>
