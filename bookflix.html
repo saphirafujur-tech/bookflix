@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>BOOKFLIX 2026</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+body{background:#141414;font-family:Montserrat;color:white}
+h1,h2{font-family:"Bebas Neue"}
+.card{background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:16px}
+</style>
+</head>
+
+<body class="p-6">
+
+<h1 class="text-6xl text-center text-red-600 mb-10">
+🎬 BOOKFLIX
+</h1>
+
+<div class="max-w-4xl mx-auto">
+
+<button onclick="showForm()"
+class="bg-red-600 px-6 py-3 rounded font-bold mb-6">
++ Añadir libro
+</button>
+
+<div id="form" class="card mb-6 hidden">
+
+<input id="title" placeholder="Título"
+class="w-full mb-2 p-2 bg-black">
+
+<input id="author" placeholder="Autor"
+class="w-full mb-2 p-2 bg-black">
+
+<input id="pages" type="number"
+placeholder="Páginas"
+class="w-full mb-2 p-2 bg-black">
+
+<input id="cover"
+placeholder="URL portada"
+class="w-full mb-4 p-2 bg-black">
+
+<button onclick="saveBook()"
+class="bg-red-600 px-4 py-2 rounded">
+Guardar
+</button>
+
+</div>
+
+<div id="books"></div>
+
+</div>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+
+const firebaseConfig={
+apiKey:"AIzaSyB9HfOE1_Ow0kRgULnq_AtNxxvU5W13W7s",
+authDomain:"bookflix-1c78e.firebaseapp.com",
+projectId:"bookflix-1c78e",
+storageBucket:"bookflix-1c78e.firebasestorage.app",
+messagingSenderId:"290289108854",
+appId:"1:290289108854:web:4585c29feeab7ac2ccdc57"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+
+let editingId=null;
+
+/* =====================
+UI
+===================== */
+
+function showForm(){
+document.getElementById("form").classList.toggle("hidden");
+}
+
+/* =====================
+LOAD
+===================== */
+
+async function loadBooks(){
+
+const snap=await db
+.collection("books")
+.orderBy("created_at","desc")
+.get();
+
+const container=document.getElementById("books");
+
+container.innerHTML=snap.docs.map(doc=>{
+
+const b=doc.data();
+
+return`
+<div class="card mb-4">
+<div class="flex gap-4">
+
+${b.cover_url?
+`<img src="${b.cover_url}" 
+class="w-24 h-36 object-cover">`
+:``
+}
+
+<div class="flex-1">
+<h2 class="text-2xl text-red-500">${b.title}</h2>
+<p>${b.author}</p>
+<p>${b.pages||0} páginas</p>
+
+<button onclick="editBook('${doc.id}')"
+class="mr-2">✏️</button>
+
+<button onclick="deleteBook('${doc.id}')">
+🗑️
+</button>
+
+</div>
+</div>
+</div>
+`;
+
+}).join("");
+
+}
+
+/* =====================
+SAVE
+===================== */
+
+async function saveBook(){
+
+const book={
+title:title.value,
+author:author.value,
+pages:Number(pages.value)||0,
+cover_url:cover.value,
+created_at:new Date()
+};
+
+if(editingId){
+
+await db.collection("books")
+.doc(editingId)
+.update(book);
+
+editingId=null;
+
+}else{
+
+await db.collection("books")
+.add(book);
+
+}
+
+form.classList.add("hidden");
+
+title.value="";
+author.value="";
+pages.value="";
+cover.value="";
+
+loadBooks();
+}
+
+/* =====================
+EDIT
+===================== */
+
+async function editBook(id){
+
+const doc=await db
+.collection("books")
+.doc(id)
+.get();
+
+const b=doc.data();
+
+title.value=b.title;
+author.value=b.author;
+pages.value=b.pages;
+cover.value=b.cover_url;
+
+editingId=id;
+
+showForm();
+}
+
+/* =====================
+DELETE
+===================== */
+
+async function deleteBook(id){
+
+if(!confirm("Eliminar libro?")) return;
+
+await db.collection("books")
+.doc(id)
+.delete();
+
+loadBooks();
+}
+
+/* ===================== */
+
+loadBooks();
+
+</script>
+
+</body>
+</html>
