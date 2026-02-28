@@ -2,123 +2,95 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
-<title>BOOKFLIX</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bookflix definitivo</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <style>
 body{background:#141414;color:white;font-family:sans-serif}
-.card{background:#1a1a1a;border:1px solid #333;padding:20px;border-radius:12px}
-.bingo-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
-.bingo-cell{background:#1a1a1a;border:1px solid #333;padding:20px;text-align:center}
-.shelf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+.stat-card{background:#1a1a1a;border:1px solid #333;border-radius:1rem;padding:1rem}
+.bingo-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.bingo-cell{border:1px solid #333;padding:10px;text-align:center}
 </style>
 </head>
 
 <body>
+<h1 class="text-4xl text-center my-6">🎬 BOOKFLIX DEFINITIVO</h1>
 
-<h1 class="text-5xl text-center mt-10 text-red-600">🎬 BOOKFLIX</h1>
+<div class="stat-card">
+<h2>🧡 Estantería</h2>
+<div id="shelfGrid"></div>
+</div>
 
-<div class="max-w-6xl mx-auto p-6">
-
-<h2 class="text-3xl mb-4">🧡 Estantería</h2>
-<div id="shelfGrid" class="shelf-grid"></div>
-
-<h2 class="text-3xl mt-10 mb-4">🎯 Bingo</h2>
+<div class="stat-card mt-6">
+<h2>🎯 Bingo</h2>
 <div id="bingoGrid" class="bingo-grid"></div>
+</div>
 
-<h2 class="text-3xl mt-10 mb-4">📅 Calendario</h2>
-<div id="calendarContainer" class="card"></div>
-
+<div class="stat-card mt-6">
+<h2>📅 Calendario</h2>
+<div id="calendarContainer"></div>
 </div>
 
 <script>
-/* ================= FIREBASE ================= */
-
-const firebaseConfig={
+const firebaseConfig = {
 apiKey:"AIzaSyB9HfOE1_Ow0kRgULnq_AtNxxvU5W13W7s",
 authDomain:"bookflix-1c78e.firebaseapp.com",
-projectId:"bookflix-1c78e"
+projectId:"bookflix-1c78e",
+storageBucket:"bookflix-1c78e.firebasestorage.app",
+messagingSenderId:"290289108854",
+appId:"1:290289108854:web:4585c29feeab7ac2ccdc57"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
-console.log("🔥 Firebase conectado");
-
-/* ================= DATA ================= */
+const BINGO_CHALLENGES=[
+{id:'1',text:'+500 páginas'},
+{id:'2',text:'Premio literario'},
+{id:'3',text:'Otro continente'},
+{id:'4',text:'Romance'},
+{id:'5',text:'Teatro'}
+];
 
 let appData={books:[]};
 
-const BINGO=[
-"500 páginas","Premio","Otro continente","Romance",
-"Teatro","Biografía","Fantasía","Misterio","Clásico","LGBTQ",
-"Portada","Audiolibro","Libre","Comic","Debut",
-"Adaptado","No ficción","Mi país","SciFi","Poesía",
-"Relectura","Recomendado","Bestseller","2026","Saga"
-];
-
-/* ================= LOAD ================= */
-
-async function loadBooks(){
-
-const snap=await db.collection("books").get();
-
-appData.books=snap.docs.map(d=>{
-return {id:d.id,...d.data()}
-});
-
-initUI();
-}
-
-/* ================= UI ================= */
-
-function initUI(){
-initShelf();
-initBingo();
-initCalendar();
+async function loadBooksFromFirebase(){
+const snapshot=await db.collection("books").get();
+appData.books=snapshot.docs.map(d=>({...d.data(),id:d.id}));
+initAllUI();
 }
 
 function initShelf(){
 const grid=document.getElementById("shelfGrid");
-
-if(!appData.books.length){
-grid.innerHTML="Sin libros";
-return;
-}
-
 grid.innerHTML=appData.books.map(b=>`
-<div class="card">
-<b>${b.title}</b><br>
-<span style="color:#aaa">${b.author}</span>
-</div>
+<div>${b.title} - ${b.author}</div>
 `).join("");
 }
 
 function initBingo(){
 const grid=document.getElementById("bingoGrid");
-
-grid.innerHTML=BINGO.map(c=>`
-<div class="bingo-cell">${c}</div>
-`).join("");
+grid.innerHTML=BINGO_CHALLENGES.map(c=>{
+const done=appData.books.some(b=>(b.bingoIds||[]).includes(c.id));
+return `<div class="bingo-cell">${c.text} ${done?'✅':''}</div>`;
+}).join("");
 }
 
 function initCalendar(){
-document.getElementById("calendarContainer")
-.innerHTML="Calendario activo ✅";
+document.getElementById("calendarContainer").innerHTML="Calendario activo ✅";
 }
 
-/* ================= START ================= */
+function initAllUI(){
+initShelf();
+initBingo();
+initCalendar();
+}
 
-document.addEventListener("DOMContentLoaded",()=>{
-loadBooks();
-});
+document.addEventListener("DOMContentLoaded",loadBooksFromFirebase);
 </script>
 
 </body>
