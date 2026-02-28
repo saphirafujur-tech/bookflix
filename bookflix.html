@@ -11,26 +11,50 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 
 <style>
-body{background:#141414;font-family:Montserrat;color:white}
-h1,h2{font-family:"Bebas Neue"}
-.card{background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:16px}
+*{font-family:Montserrat}
+body{background:#141414;color:white}
+h1,h2,h3{font-family:"Bebas Neue";letter-spacing:2px}
+.stat-card{
+background:linear-gradient(135deg,#2a2a2a,#1a1a1a);
+border:1px solid #333;
+border-radius:1rem;
+padding:1.5rem;
+}
+.card:hover{
+transform:translateY(-5px);
+box-shadow:0 10px 30px rgba(229,9,20,.3);
+}
+.shelf-grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+gap:14px;
+}
+.shelf-item{
+background:#1a1a1a;
+border:1px solid #333;
+border-radius:14px;
+overflow:hidden;
+cursor:pointer;
+}
+.shelf-cover{
+width:100%;
+aspect-ratio:2/3;
+object-fit:cover;
+}
 </style>
 </head>
 
 <body class="p-6">
 
-<h1 class="text-6xl text-center text-red-600 mb-10">
-🎬 BOOKFLIX
-</h1>
+<header class="text-center mb-10">
+<h1 class="text-7xl text-red-600">🎬 BOOKFLIX</h1>
+<p>Tu biblioteca personal 2026</p>
+</header>
 
-<div class="max-w-4xl mx-auto">
+<div class="max-w-6xl mx-auto">
 
-<button onclick="showForm()"
-class="bg-red-600 px-6 py-3 rounded font-bold mb-6">
-+ Añadir libro
-</button>
-
-<div id="form" class="card mb-6 hidden">
+<div class="stat-card mb-8">
+<h2 class="text-3xl mb-4">📚 Añadir libro</h2>
 
 <input id="title" placeholder="Título"
 class="w-full mb-2 p-2 bg-black">
@@ -47,16 +71,15 @@ placeholder="URL portada"
 class="w-full mb-4 p-2 bg-black">
 
 <button onclick="saveBook()"
-class="bg-red-600 px-4 py-2 rounded">
-Guardar
+class="bg-red-600 px-6 py-2 rounded font-bold">
+Guardar libro
 </button>
-
 </div>
 
-<div id="books"></div>
+<h2 class="text-4xl mb-6">🧡 Estantería</h2>
+<div id="shelfGrid" class="shelf-grid"></div>
 
 </div>
-
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -77,17 +100,7 @@ const db=firebase.firestore();
 
 let editingId=null;
 
-/* =====================
-UI
-===================== */
-
-function showForm(){
-document.getElementById("form").classList.toggle("hidden");
-}
-
-/* =====================
-LOAD
-===================== */
+/* LOAD */
 
 async function loadBooks(){
 
@@ -96,36 +109,28 @@ const snap=await db
 .orderBy("created_at","desc")
 .get();
 
-const container=document.getElementById("books");
+const grid=document.getElementById("shelfGrid");
 
-container.innerHTML=snap.docs.map(doc=>{
+grid.innerHTML=snap.docs.map(doc=>{
 
 const b=doc.data();
 
 return`
-<div class="card mb-4">
-<div class="flex gap-4">
+<div class="shelf-item">
 
 ${b.cover_url?
-`<img src="${b.cover_url}" 
-class="w-24 h-36 object-cover">`
-:``
+`<img src="${b.cover_url}" class="shelf-cover">`
+:`<div class="shelf-cover flex items-center justify-center">Sin portada</div>`
 }
 
-<div class="flex-1">
-<h2 class="text-2xl text-red-500">${b.title}</h2>
-<p>${b.author}</p>
-<p>${b.pages||0} páginas</p>
+<div class="p-2">
+<div class="font-bold">${b.title}</div>
+<div class="text-sm text-gray-400">${b.author}</div>
 
-<button onclick="editBook('${doc.id}')"
-class="mr-2">✏️</button>
-
-<button onclick="deleteBook('${doc.id}')">
-🗑️
-</button>
-
+<button onclick="editBook('${doc.id}')">✏️</button>
+<button onclick="deleteBook('${doc.id}')">🗑️</button>
 </div>
-</div>
+
 </div>
 `;
 
@@ -133,9 +138,7 @@ class="mr-2">✏️</button>
 
 }
 
-/* =====================
-SAVE
-===================== */
+/* SAVE */
 
 async function saveBook(){
 
@@ -162,8 +165,6 @@ await db.collection("books")
 
 }
 
-form.classList.add("hidden");
-
 title.value="";
 author.value="";
 pages.value="";
@@ -172,17 +173,11 @@ cover.value="";
 loadBooks();
 }
 
-/* =====================
-EDIT
-===================== */
+/* EDIT */
 
 async function editBook(id){
 
-const doc=await db
-.collection("books")
-.doc(id)
-.get();
-
+const doc=await db.collection("books").doc(id).get();
 const b=doc.data();
 
 title.value=b.title;
@@ -191,17 +186,13 @@ pages.value=b.pages;
 cover.value=b.cover_url;
 
 editingId=id;
-
-showForm();
 }
 
-/* =====================
-DELETE
-===================== */
+/* DELETE */
 
 async function deleteBook(id){
 
-if(!confirm("Eliminar libro?")) return;
+if(!confirm("Eliminar libro?"))return;
 
 await db.collection("books")
 .doc(id)
@@ -209,8 +200,6 @@ await db.collection("books")
 
 loadBooks();
 }
-
-/* ===================== */
 
 loadBooks();
 
