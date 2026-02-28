@@ -1149,7 +1149,25 @@
     function escapeAttr(str) {
       return escapeHtml(str).replaceAll("\n", " ");
     }
+<script>
+async function loadBooksFromFirebase() {
 
+  const snapshot = await db.collection("books")
+    .orderBy("created_at","desc")
+    .get();
+
+  appData.books = snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+
+  console.log("📚 Libros cargados:", appData.books);
+
+  recalcBingo();
+  updateStats();
+  initAllUI();
+}
+</script>
     document.addEventListener('DOMContentLoaded', async () => {
       applyAdminUI();
 
@@ -1192,3 +1210,11 @@ console.log("🔥 Firebase conectado");
 </script>
 </body>
 </html>
+document.addEventListener('DOMContentLoaded', async () => {
+
+  applyAdminUI();
+  setupGenreCustom();
+
+  await loadBooksFromFirebase();
+
+});
