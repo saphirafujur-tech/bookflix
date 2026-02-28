@@ -11,10 +11,7 @@
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <!-- Supabase (UMD) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-
-  <style>
+   <style>
     * { font-family: 'Montserrat', sans-serif; }
     html, body { height: 100%; margin: 0; padding: 0; }
     h1, h2, h3 { font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; }
@@ -442,15 +439,6 @@
   </div>
 
   <script>
-    /* =========================
-       CONFIG SUPABASE
-    ========================== */
-
-    const SUPABASE_URL = "https://jqczxqnvdaubpkwesbkw.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxY3p4cW52ZGF1YnBrd2VzYmt3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2NzQsImV4cCI6MjA4NjU3ODY3NH0.WKJ92FmjOBWUeXyMry82q4Z-Pd1lbutmtSTIIOV4tSY";
-    const ADMIN_EMAIL = "saphira.fujur@gmail.com";
-
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     /* =========================
        CONSTANTES APP
@@ -550,76 +538,7 @@
       el.style.display = "block";
     }
 
-    /* =========================
-       AUTH (SUPABASE)
-    ========================== */
-
-    async function login() {
-      try {
-        const email = document.getElementById("adminEmail").value.trim();
-        const password = document.getElementById("adminPassword").value.trim();
-
-        if (!email || !password) {
-          showAdminError("Completa email y contraseña.");
-          return;
-        }
-
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-
-        if (error) {
-          showAdminError("Login incorrecto. Revisa email/contraseña.");
-          return;
-        }
-
-        currentUserEmail = data.user?.email || null;
-
-        if (currentUserEmail !== ADMIN_EMAIL) {
-          await supabaseClient.auth.signOut();
-          currentUserEmail = null;
-          showAdminError("Este usuario no es admin.");
-          return;
-        }
-
-        isAdmin = true;
-        closeAdminModal();
-        applyAdminUI();
-        await loadBooksFromSupabase();
-      } catch (e) {
-        showAdminError("Error inesperado al iniciar sesión.");
-        console.error(e);
-      }
-    }
-
-    async function logout() {
-      await supabaseClient.auth.signOut();
-      isAdmin = false;
-      currentUserEmail = null;
-      applyAdminUI();
-      await loadBooksFromSupabase();
-    }
-
-    async function resetPassword() {
-      try {
-        const email = document.getElementById("adminEmail").value.trim();
-
-        if (!email) {
-          showAdminError("Pon tu email para enviarte el reset.");
-          return;
-        }
-
-        const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
-
-        if (error) {
-          showAdminError("No se pudo enviar el email de recuperación.");
-          return;
-        }
-
-        showAdminError("📩 Email enviado. Mira tu bandeja (y spam).");
-      } catch (e) {
-        showAdminError("Error enviando recuperación.");
-      }
-    }
-
+   
     function applyAdminUI() {
       const addBtn = document.getElementById("adminAddBookButton");
       const logoutBtn = document.getElementById("logoutBtn");
@@ -637,132 +556,13 @@
       }
     }
 
-    /* =========================
-       CRUD SUPABASE (BOOKS)
-    ========================== */
-
-    async function loadBooksFromSupabase() {
-      const { data, error } = await supabaseClient
-        .from("books")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error cargando books:", error);
-        appData.books = [];
-      } else {
-        appData.books = (data || []).map(row => ({
-          id: row.id,
-          title: row.title || "",
-          author: row.author || "",
-          genre: row.genre || "",
-          pages: row.pages || 0,
-          date: row.date || "",
-          bingoIds: row.bingo_ids || [],
-          rating: row.rating || 0,
-          plot: row.plot || 0,
-          characters: row.characters || 0,
-          writing: row.writing || 0,
-          pace: row.pace || 0,
-          review: row.review || "",
-          quote: row.quote || "",
-
-          start_date: row.start_date || "",
-          end_date: row.end_date || "",
-          start_quote: row.start_quote || "",
-          end_quote: row.end_quote || "",
-          cover_url: row.cover_url || "",
-          canva_url: row.canva_url || ""
-        }));
-      }
-
+  
       recalcBingo();
       updateStats();
       initAllUI();
     }
 
-    async function insertBookToSupabase(book) {
-      const payload = {
-        title: book.title,
-        author: book.author,
-        genre: book.genre,
-        pages: book.pages,
-        date: book.date,
-        bingo_ids: book.bingoIds,
-        rating: book.rating,
-        plot: book.plot,
-        characters: book.characters,
-        writing: book.writing,
-        pace: book.pace,
-        review: book.review,
-        quote: book.quote,
-
-        start_date: book.start_date,
-        end_date: book.end_date,
-        start_quote: book.start_quote,
-        end_quote: book.end_quote,
-        cover_url: book.cover_url,
-        canva_url: book.canva_url
-      };
-
-      const { error } = await supabaseClient.from("books").insert(payload);
-
-      if (error) {
-        alert("❌ No se pudo guardar el libro. ¿Estás logueada como admin?");
-        console.error(error);
-        return false;
-      }
-
-      return true;
-    }
-
-    async function updateBookInSupabase(id, book) {
-      const payload = {
-        title: book.title,
-        author: book.author,
-        genre: book.genre,
-        pages: book.pages,
-        date: book.date,
-        bingo_ids: book.bingoIds,
-        rating: book.rating,
-        plot: book.plot,
-        characters: book.characters,
-        writing: book.writing,
-        pace: book.pace,
-        review: book.review,
-        quote: book.quote,
-
-        start_date: book.start_date,
-        end_date: book.end_date,
-        start_quote: book.start_quote,
-        end_quote: book.end_quote,
-        cover_url: book.cover_url,
-        canva_url: book.canva_url
-      };
-
-      const { error } = await supabaseClient.from("books").update(payload).eq("id", id);
-
-      if (error) {
-        alert("❌ No se pudo actualizar el libro.");
-        console.error(error);
-        return false;
-      }
-
-      return true;
-    }
-
-    async function deleteBookFromSupabase(id) {
-      const { error } = await supabaseClient.from("books").delete().eq("id", id);
-
-      if (error) {
-        alert("❌ No se pudo borrar el libro.");
-        console.error(error);
-        return false;
-      }
-
-      return true;
-    }
-
+  
     /* =========================
        UI + LÓGICA
     ========================== */
@@ -866,17 +666,7 @@
         quote: document.getElementById('bookQuote').value
       };
 
-      if (editingBookId) {
-        const ok = await updateBookInSupabase(editingBookId, book);
-        if (!ok) return;
-      } else {
-        const ok = await insertBookToSupabase(book);
-        if (!ok) return;
-      }
-
-      await loadBooksFromSupabase();
-      toggleAddBookForm();
-    }
+     
 
     function cancelAddBook() {
       toggleAddBookForm();
@@ -922,16 +712,7 @@
       document.getElementById('addBookForm').style.display = 'block';
     }
 
-    async function deleteBook(id) {
-      if (!isAdmin) return;
-
-      if (confirm('¿Estás seguro de eliminar este libro?')) {
-        const ok = await deleteBookFromSupabase(id);
-        if (!ok) return;
-        await loadBooksFromSupabase();
-      }
-    }
-
+    
     function updateStats() {
       if (!appData.books || appData.books.length === 0) {
         appData.stats = { books: 0, pages: 0, avgRating: 0 };
@@ -1372,7 +1153,6 @@
     document.addEventListener('DOMContentLoaded', async () => {
       applyAdminUI();
 
-      const { data } = await supabaseClient.auth.getSession();
       const email = data.session?.user?.email || null;
 
       if (email && email === ADMIN_EMAIL) {
@@ -1389,8 +1169,7 @@
         openAdminModal();
       }
 
-      await loadBooksFromSupabase();
-    });
+         });
   </script>
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
