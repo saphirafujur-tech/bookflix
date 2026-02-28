@@ -1149,67 +1149,12 @@
     function escapeAttr(str) {
       return escapeHtml(str).replaceAll("\n", " ");
     }
-<script>
-<script>
-async function loadBooksFromFirebase() {
-
-  try {
-
-    const snapshot = await db
-      .collection("books")
-      .orderBy("created_at", "desc")
-      .get();
-
-    appData.books = snapshot.docs.map(doc => {
-      const data = doc.data();
-
-      return {
-        id: doc.id,
-        title: data.title || "",
-        author: data.author || "",
-        pages: data.pages || 0,
-        genre: data.genre || "",
-        date: data.date || "",
-        bingoIds: data.bingoIds || [],
-        rating: data.rating || 0,
-        plot: data.plot || 0,
-        characters: data.characters || 0,
-        writing: data.writing || 0,
-        pace: data.pace || 0,
-        review: data.review || "",
-        quote: data.quote || "",
-        cover_url: data.cover_url || "",
-        start_date: data.start_date || "",
-        end_date: data.end_date || ""
-      };
-    });
-
-    console.log("✅ Firebase libros cargados:", appData.books);
-
-    recalcBingo();
-    updateStats();
-    initAllUI();
-
-  } catch (err) {
-    console.error("🔥 ERROR leyendo Firebase:", err);
-  }
-}
-</script>
 </script>
     document.addEventListener('DOMContentLoaded', async () => {
       applyAdminUI();
 
-      const email = data.session?.user?.email || null;
+      
 
-      if (email && email === ADMIN_EMAIL) {
-        isAdmin = true;
-        currentUserEmail = email;
-      } else {
-        isAdmin = false;
-        currentUserEmail = null;
-      }
-
-      applyAdminUI();
 
       if (window.location.hash === "#admin" && !isAdmin) {
         openAdminModal();
@@ -1237,6 +1182,22 @@ const db = firebase.firestore();
 
 console.log("🔥 Firebase conectado");
 </script>
+  <!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyB9HfOE1_Ow0kRgULnq_AtNxxvU5W13W7s",
+  authDomain: "bookflix-1c78e.firebaseapp.com",
+  projectId: "bookflix-1c78e",
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+console.log("🔥 Firebase conectado");
+</script>
 </body>
 </html>
 document.addEventListener('DOMContentLoaded', async () => {
@@ -1247,3 +1208,38 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadBooksFromFirebase();
 
 });
+<script>
+async function loadBooksFromFirebase() {
+
+  const snapshot = await db
+    .collection("books")
+    .orderBy("created_at","desc")
+    .get();
+
+  appData.books = snapshot.docs.map(doc => {
+    const d = doc.data();
+
+    return {
+      id: doc.id,
+      title: d.title || "",
+      author: d.author || "",
+      pages: d.pages || 0,
+      genre: d.genre || "",
+      date: d.date || "",
+      bingoIds: d.bingoIds || [],
+      rating: d.rating || 0
+    };
+  });
+
+  console.log("✅ Libros cargados:", appData.books);
+
+  recalcBingo();
+  updateStats();
+  initAllUI();
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  applyAdminUI();
+  await loadBooksFromFirebase();
+});
+</script>
