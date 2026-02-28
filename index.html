@@ -1150,23 +1150,51 @@
       return escapeHtml(str).replaceAll("\n", " ");
     }
 <script>
+<script>
 async function loadBooksFromFirebase() {
 
-  const snapshot = await db.collection("books")
-    .orderBy("created_at","desc")
-    .get();
+  try {
 
-  appData.books = snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  }));
+    const snapshot = await db
+      .collection("books")
+      .orderBy("created_at", "desc")
+      .get();
 
-  console.log("📚 Libros cargados:", appData.books);
+    appData.books = snapshot.docs.map(doc => {
+      const data = doc.data();
 
-  recalcBingo();
-  updateStats();
-  initAllUI();
+      return {
+        id: doc.id,
+        title: data.title || "",
+        author: data.author || "",
+        pages: data.pages || 0,
+        genre: data.genre || "",
+        date: data.date || "",
+        bingoIds: data.bingoIds || [],
+        rating: data.rating || 0,
+        plot: data.plot || 0,
+        characters: data.characters || 0,
+        writing: data.writing || 0,
+        pace: data.pace || 0,
+        review: data.review || "",
+        quote: data.quote || "",
+        cover_url: data.cover_url || "",
+        start_date: data.start_date || "",
+        end_date: data.end_date || ""
+      };
+    });
+
+    console.log("✅ Firebase libros cargados:", appData.books);
+
+    recalcBingo();
+    updateStats();
+    initAllUI();
+
+  } catch (err) {
+    console.error("🔥 ERROR leyendo Firebase:", err);
+  }
 }
+</script>
 </script>
     document.addEventListener('DOMContentLoaded', async () => {
       applyAdminUI();
@@ -1186,6 +1214,7 @@ async function loadBooksFromFirebase() {
       if (window.location.hash === "#admin" && !isAdmin) {
         openAdminModal();
       }
+await loadBooksFromFirebase();
 
          });
   </script>
