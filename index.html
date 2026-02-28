@@ -1,0 +1,1397 @@
+<!doctype html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bookflix - Tu Biblioteca Personal 2026</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Supabase (UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+  <style>
+    * { font-family: 'Montserrat', sans-serif; }
+    html, body { height: 100%; margin: 0; padding: 0; }
+    h1, h2, h3 { font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; }
+    body { background: #141414; }
+    .stat-card { background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%); border: 1px solid #333; border-radius: 1rem; padding: 1.5rem; }
+    .card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(229, 9, 20, 0.3); }
+    .bingo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; }
+    .bingo-cell { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid #333; border-radius: 0.5rem; transition: all 0.3s ease; cursor: pointer; padding: 0.75rem; position: relative; background: #1a1a1a; }
+    .bingo-cell.selected { background: linear-gradient(135deg, #e50914 0%, #b20710 100%); border-color: #e50914; box-shadow: 0 0 15px rgba(229, 9, 20, 0.5); }
+    .bingo-cell:hover { transform: scale(1.05); border-color: #e50914; }
+    .bingo-books-count { position: absolute; top: 4px; right: 4px; background: #e50914; color: #fff; font-weight: bold; font-size: 0.7rem; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .checkbox-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border-radius: 0.5rem; transition: background 0.2s; cursor: pointer; }
+    .checkbox-item:hover { background: rgba(229, 9, 20, 0.1); }
+    .checkbox { width: 24px; height: 24px; border: 2px solid #666; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+    .checkbox.checked { background: #e50914; border-color: #e50914; }
+    .editable-field { background: transparent; border: 2px solid transparent; padding: 0.5rem; border-radius: 0.25rem; transition: all 0.2s; width: 100%; }
+    .editable-field:hover { border-color: #333; }
+    .editable-field:focus { outline: none; border-color: #e50914; background: rgba(229, 9, 20, 0.05); }
+    textarea.editable-field { min-height: 80px; resize: vertical; }
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .calendar-header button { background: #333; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+    .calendar-header button:hover { background: #e50914; }
+    .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; margin-bottom: 0.5rem; }
+    .weekday { text-align: center; font-weight: bold; color: #e50914; padding: 0.5rem; font-size: 0.9rem; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; }
+    .calendar-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; border: 2px solid #333; border-radius: 0.5rem; background: #1a1a1a; padding: 0.5rem; position: relative; min-height: 80px; cursor: pointer; transition: all 0.2s; overflow: hidden; }
+    .calendar-day:hover { border-color: #e50914; transform: translateY(-2px); }
+    .calendar-day.other-month { opacity: 0.3; cursor: default; }
+    .calendar-day.today { border-color: #e50914; background: rgba(229, 9, 20, 0.1); }
+    .calendar-day.has-books { background: rgba(229, 9, 20, 0.2); border-color: #e50914; }
+    .day-number { font-weight: bold; color: #fff; font-size: 0.9rem; margin-bottom: 0.25rem; }
+    .day-books-count { font-size: 0.7rem; color: #e50914; font-weight: bold; }
+    .books-header { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; cursor: pointer; border: 2px solid #333; border-radius: 1rem; margin-bottom: 1.5rem; transition: all 0.3s; }
+    .books-header:hover { border-color: #e50914; background: rgba(229, 9, 20, 0.05); }
+    .toggle-arrow { font-size: 1.5rem; color: #e50914; transition: transform 0.3s; }
+    @media (max-width: 768px) { .bingo-grid { gap: 0.25rem; } .bingo-cell { padding: 0.25rem; min-height: 80px; } }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 16px;
+    }
+    .modal {
+      width: 100%;
+      max-width: 520px;
+      background: #141414;
+      border: 1px solid #333;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+
+    /* Estantería */
+    .shelf-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 14px; }
+    .shelf-item { background:#1a1a1a; border:1px solid #333; border-radius:14px; overflow:hidden; cursor:pointer; transition: transform .2s, border-color .2s; }
+    .shelf-item:hover { transform: translateY(-4px); border-color:#e50914; }
+    .shelf-cover { width:100%; aspect-ratio: 2/3; object-fit: cover; background:#0f0f0f; }
+    .shelf-meta { padding:10px; }
+    .shelf-title { font-weight:700; font-size:.9rem; color:#fff; line-height:1.2; }
+    .shelf-author { font-size:.8rem; color:#aaa; margin-top:4px; }
+  </style>
+</head>
+
+<body class="h-full" style="background: #141414;">
+  <main class="h-full w-full overflow-auto">
+    <div class="min-h-full w-full">
+
+      <!-- Header -->
+      <header class="px-4 sm:px-8 py-12 text-center" style="background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(20,20,20,1) 100%);">
+        <h1 id="appTitle" class="text-6xl sm:text-8xl font-bold mb-2" style="color: #e50914; text-shadow: 0 0 20px rgba(229,9,20,0.5);">🎬 BOOKFLIX</h1>
+        <p id="appSubtitle" class="text-xl sm:text-2xl" style="color: #fff;">Tu biblioteca personal 2026 📚</p>
+
+        <!-- Admin button (OCULTO) -->
+        <div class="mt-6 flex items-center justify-center gap-3">
+          <button id="adminBtn" style="display:none;" onclick="openAdminModal();">🔒 Admin</button>
+
+          <button id="logoutBtn"
+            class="px-5 py-2 rounded-lg font-bold"
+            style="background:#e50914;color:#fff;display:none;"
+            onclick="logout()">
+            🚪 Cerrar sesión
+          </button>
+
+          <span id="adminStatus" class="text-sm" style="color:#aaa;"></span>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <div class="px-4 sm:px-8 py-8 max-w-7xl mx-auto">
+
+        <!-- Dashboard -->
+        <section class="mb-12">
+          <h2 class="text-4xl sm:text-5xl font-bold mb-6" style="color: #fff;">📊 Dashboard</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="stat-card text-center">
+              <div class="text-4xl font-bold mb-2" style="color: #e50914;" id="booksCount">0</div>
+              <div class="text-sm" style="color: #aaa;">Libros leídos</div>
+            </div>
+            <div class="stat-card text-center">
+              <div class="text-4xl font-bold mb-2" style="color: #e50914;" id="pagesCount">0</div>
+              <div class="text-sm" style="color: #aaa;">Páginas totales</div>
+            </div>
+            <div class="stat-card text-center">
+              <div class="text-4xl font-bold mb-2" style="color: #e50914;" id="avgRating">0</div>
+              <div class="text-sm" style="color: #aaa;">Valoración promedio</div>
+            </div>
+            <div class="stat-card text-center">
+              <div class="text-4xl font-bold mb-2" style="color: #e50914;" id="bingoProgress">0/25</div>
+              <div class="text-sm" style="color: #aaa;">Desafíos completados</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Estantería -->
+        <section class="mb-12">
+          <h2 class="text-4xl sm:text-5xl font-bold mb-4" style="color:#fff;">🧡 Estantería</h2>
+          <p class="mb-6" style="color:#aaa;">Resumen visual de tus lecturas (haz click para bajar al libro).</p>
+          <div class="stat-card">
+            <div id="shelfGrid" class="shelf-grid"></div>
+          </div>
+        </section>
+
+        <!-- Bingo Literario -->
+        <section class="mb-12">
+          <h2 class="text-4xl sm:text-5xl font-bold mb-4" style="color: #fff;">🎯 Bingo Literario 2026</h2>
+          <p class="mb-6" style="color: #aaa;">¡Completa el desafío leyendo libros que cumplan cada categoría! 📚</p>
+          <div class="bingo-grid mb-6" id="bingoGrid"></div>
+        </section>
+
+        <!-- Calendario -->
+        <section class="mb-12">
+          <h2 class="text-4xl sm:text-5xl font-bold mb-6" style="color: #fff;">📅 Calendario de Lecturas 2026</h2>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2">
+              <div class="stat-card">
+                <div id="calendarContainer"></div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <h3 class="text-2xl font-bold mb-4" style="color: #e50914;">📊 Estadísticas del Mes</h3>
+              <div class="space-y-3">
+                <div><span style="color: #aaa;">Libros este mes:</span> <span id="monthBooksCount" class="font-bold" style="color: #e50914;">0</span></div>
+                <div><span style="color: #aaa;">Páginas este mes:</span> <span id="monthPagesCount" class="font-bold" style="color: #e50914;">0</span></div>
+                <div><span style="color: #aaa;">Valoración promedio:</span> <span id="monthAvgRating" class="font-bold" style="color: #e50914;">0</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Logros -->
+        <section class="mb-12">
+          <h2 class="text-4xl sm:text-5xl font-bold mb-6" style="color: #fff;">🏆 Logros Desbloqueados</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="card stat-card">
+              <div id="achievementsList"></div>
+            </div>
+            <div class="card stat-card">
+              <h3 class="text-2xl font-bold mb-4" style="color: #e50914;">🎯 Metas del Año</h3>
+              <div id="goalsList"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Reflexiones -->
+        <section class="mb-12">
+          <h2 class="text-4xl sm:text-5xl font-bold mb-6" style="color: #fff;">💭 Reflexiones del Año</h2>
+          <div class="space-y-6">
+            <div class="card stat-card">
+              <h3 class="text-xl font-bold mb-3" style="color: #e50914;">📖 Libro Favorito del Año</h3>
+              <textarea class="editable-field" style="color: #ccc;" placeholder="¿Cuál fue el libro que más disfrutaste?" id="favoriteBook"></textarea>
+            </div>
+            <div class="card stat-card">
+              <h3 class="text-xl font-bold mb-3" style="color: #e50914;">😱 Mayor Sorpresa</h3>
+              <textarea class="editable-field" style="color: #ccc;" placeholder="¿Qué libro superó tus expectativas?" id="biggestSurprise"></textarea>
+            </div>
+            <div class="card stat-card">
+              <h3 class="text-xl font-bold mb-3" style="color: #e50914;">😔 Mayor Decepción</h3>
+              <textarea class="editable-field" style="color: #ccc;" placeholder="¿Cuál te decepcionó y por qué?" id="biggestDisappointment"></textarea>
+            </div>
+            <div class="card stat-card">
+              <h3 class="text-xl font-bold mb-3" style="color: #e50914;">🔮 Descubrimiento del Año</h3>
+              <textarea class="editable-field" style="color: #ccc;" placeholder="Nuevo autor, género o saga que descubriste..." id="discovery"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- Wishlist -->
+        <section class="mb-12">
+          <h2 class="text-4xl sm:text-5xl font-bold mb-6" style="color: #fff;">🛍️ Wishlist de Libros</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="card stat-card">
+              <h3 class="text-xl font-bold mb-4" style="color: #e50914;">🛒 Quiero Comprar</h3>
+              <div id="buyList"></div>
+              <button onclick="addToList('buyList')" class="mt-4 px-4 py-2 rounded-lg w-full" style="background: #333; color: #fff; font-weight: bold;">+ Añadir</button>
+            </div>
+            <div class="card stat-card">
+              <h3 class="text-xl font-bold mb-4" style="color: #e50914;">📚 En la Biblioteca</h3>
+              <div id="libraryList"></div>
+              <button onclick="addToList('libraryList')" class="mt-4 px-4 py-2 rounded-lg w-full" style="background: #333; color: #fff; font-weight: bold;">+ Añadir</button>
+            </div>
+            <div class="card stat-card">
+              <h3 class="text-xl font-bold mb-4" style="color: #e50914;">🎁 Para Regalar</h3>
+              <div id="giftList"></div>
+              <button onclick="addToList('giftList')" class="mt-4 px-4 py-2 rounded-lg w-full" style="background: #333; color: #fff; font-weight: bold;">+ Añadir</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Mi Biblioteca -->
+        <section class="mb-12">
+          <h2 class="text-4xl sm:text-5xl font-bold mb-6" style="color: #fff;">📚 Mi Biblioteca</h2>
+
+          <!-- Solo admin -->
+          <div class="mb-6" id="adminAddBookButton" style="display:none;">
+            <button onclick="toggleAddBookForm()" class="px-6 py-3 rounded-lg font-bold text-lg" style="background: #e50914; color: #fff;">
+              + Añadir Nuevo Libro
+            </button>
+          </div>
+
+          <!-- Formulario de Añadir Libro -->
+          <div id="addBookForm" class="card stat-card mb-6" style="display: none;">
+            <h3 class="text-2xl font-bold mb-4" style="color: #e50914;">📖 Nuevo Libro</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block mb-2 font-semibold" style="color: #fff;">Título *</label>
+                <input type="text" id="bookTitle" class="editable-field" style="color: #ccc;" placeholder="Título del libro" required>
+              </div>
+              <div>
+                <label class="block mb-2 font-semibold" style="color: #fff;">Autor/a *</label>
+                <input type="text" id="bookAuthor" class="editable-field" style="color: #ccc;" placeholder="Nombre del autor/a" required>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block mb-2 font-semibold" style="color: #fff;">Género</label>
+                  <select id="bookGenre" class="editable-field" style="color: #ccc;">
+                    <option value="">Selecciona género</option>
+                    <option value="Ficción">Ficción</option>
+                    <option value="No Ficción">No Ficción</option>
+                    <option value="Fantasía">Fantasía</option>
+                    <option value="Ciencia Ficción">Ciencia Ficción</option>
+                    <option value="Romance">Romance</option>
+                    <option value="Misterio">Misterio</option>
+                    <option value="Thriller">Thriller</option>
+                    <option value="Historia">Historia</option>
+                    <option value="Biografía">Biografía</option>
+                    <option value="Poesía">Poesía</option>
+                    <option value="Teatro">Teatro</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block mb-2 font-semibold" style="color: #fff;">Páginas</label>
+                  <input type="number" id="bookPages" class="editable-field" style="color: #ccc;" placeholder="Número de páginas">
+                </div>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-semibold" style="color: #fff;">Fecha de lectura</label>
+                <input type="date" id="bookDate" class="editable-field" style="color: #ccc;">
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block mb-2 font-semibold" style="color: #fff;">📅 Fecha inicio</label>
+                  <input type="date" id="bookStartDate" class="editable-field" style="color: #ccc;">
+                </div>
+                <div>
+                  <label class="block mb-2 font-semibold" style="color: #fff;">🏁 Fecha final</label>
+                  <input type="date" id="bookEndDate" class="editable-field" style="color: #ccc;">
+                </div>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-semibold" style="color: #fff;">✨ Frase del inicio</label>
+                <textarea id="bookStartQuote" class="editable-field" style="color: #ccc;" placeholder="Primera frase o frase inicial..."></textarea>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-semibold" style="color: #fff;">🌙 Frase final</label>
+                <textarea id="bookEndQuote" class="editable-field" style="color: #ccc;" placeholder="Última frase o frase final..."></textarea>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-semibold" style="color: #fff;">🖼️ Portada (URL)</label>
+                <input type="url" id="bookCoverUrl" class="editable-field" style="color: #ccc;" placeholder="https://...jpg/png">
+              </div>
+
+              <div>
+                <label class="block mb-2 font-semibold" style="color: #fff;">🔗 Enlace resumen Canva</label>
+                <input type="url" id="bookCanvaUrl" class="editable-field" style="color: #ccc;" placeholder="https://www.canva.com/design/...">
+              </div>
+
+              <div>
+                <label class="block mb-2 font-semibold" style="color: #fff;">Desafío del Bingo</label>
+                <div id="bingoCheckboxes" class="space-y-2 max-h-64 overflow-y-auto p-3" style="background: #1a1a1a; border: 1px solid #333; border-radius: 0.5rem;"></div>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-semibold" style="color: #fff;">Valoración (1-5) ⭐</label>
+                <input type="number" id="bookRating" class="editable-field" style="color: #ccc;" placeholder="1-5" min="1" max="5" step="0.5">
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                  <label class="block mb-2 font-semibold text-sm" style="color: #fff;">📊 Trama</label>
+                  <input type="number" id="bookPlot" class="editable-field" style="color: #ccc;" placeholder="1-5" min="1" max="5" step="0.5">
+                </div>
+                <div>
+                  <label class="block mb-2 font-semibold text-sm" style="color: #fff;">👥 Personajes</label>
+                  <input type="number" id="bookCharacters" class="editable-field" style="color: #ccc;" placeholder="1-5" min="1" max="5" step="0.5">
+                </div>
+                <div>
+                  <label class="block mb-2 font-semibold text-sm" style="color: #fff;">✒️ Escritura</label>
+                  <input type="number" id="bookWriting" class="editable-field" style="color: #ccc;" placeholder="1-5" min="1" max="5" step="0.5">
+                </div>
+                <div>
+                  <label class="block mb-2 font-semibold text-sm" style="color: #fff;">⚡ Ritmo</label>
+                  <input type="number" id="bookPace" class="editable-field" style="color: #ccc;" placeholder="1-5" min="1" max="5" step="0.5">
+                </div>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-semibold" style="color: #fff;">📝 Mi Reseña</label>
+                <textarea id="bookReview" class="editable-field" style="color: #ccc; min-height: 120px;" placeholder="Escribe tus pensamientos sobre el libro..."></textarea>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-semibold" style="color: #fff;">💭 Cita Favorita</label>
+                <textarea id="bookQuote" class="editable-field" style="color: #ccc;" placeholder="Escribe una cita memorable del libro..."></textarea>
+              </div>
+
+              <div class="flex gap-4">
+                <button onclick="saveBook()" class="px-6 py-3 rounded-lg font-bold flex-1" style="background: #e50914; color: #fff;">💾 Guardar Libro</button>
+                <button onclick="cancelAddBook()" class="px-6 py-3 rounded-lg font-bold flex-1" style="background: #333; color: #fff;">Cancelar</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Header de Libros Guardados -->
+          <div class="books-header" onclick="toggleBooksSection()">
+            <h3 class="text-xl font-bold" style="color: #e50914;">📚 Mis Libros Guardados</h3>
+            <span id="booksToggleArrow" class="toggle-arrow">▼</span>
+          </div>
+
+          <!-- Lista de Libros -->
+          <div id="booksListContainer" class="space-y-4">
+            <div id="booksList" class="space-y-4"></div>
+          </div>
+        </section>
+
+        <!-- Top 10 -->
+        <section class="mb-12">
+          <h2 class="text-4xl sm:text-5xl font-bold mb-6" style="color: #fff;">🌟 Top 10 del Año</h2>
+          <div class="card stat-card">
+            <div id="top10List" class="space-y-3"></div>
+          </div>
+        </section>
+
+        <!-- Citas -->
+        <section class="mb-12">
+          <h2 class="text-4xl sm:text-5xl font-bold mb-6" style="color: #fff;">📖 Citas Literarias Favoritas</h2>
+          <div class="space-y-4">
+            <div class="card stat-card">
+              <textarea class="editable-field text-lg italic" style="color: #e50914;" placeholder="Escribe aquí tu primera cita favorita..." id="quote1"></textarea>
+            </div>
+            <div class="card stat-card">
+              <textarea class="editable-field text-lg italic" style="color: #e50914;" placeholder="Segunda cita favorita..." id="quote2"></textarea>
+            </div>
+            <div class="card stat-card">
+              <textarea class="editable-field text-lg italic" style="color: #e50914;" placeholder="Tercera cita favorita..." id="quote3"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center py-8" style="color: #666;">
+          <p>📚 Creado con amor por un lector apasionado</p>
+          <p class="text-sm mt-2">Bookflix 2026 - Tu biblioteca personal</p>
+        </footer>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ADMIN MODAL -->
+  <div id="adminModalBackdrop" class="modal-backdrop">
+    <div class="modal">
+      <div class="flex items-center justify-between mb-4">
+        <div class="text-xl font-bold" style="color:#e50914;">🔒 MODO ADMIN</div>
+        <button onclick="closeAdminModal()" class="px-3 py-2 rounded-lg font-bold" style="background:#333;color:#fff;">✕</button>
+      </div>
+
+      <p class="mb-4" style="color:#aaa;">
+        Si eres la dueña del Bookflix, inicia sesión para editar. Si no, puedes seguir como visitante.
+      </p>
+
+      <div class="space-y-3">
+        <input id="adminEmail" type="email" class="editable-field" style="color:#ccc;border-color:#333;background:#0f0f0f;" placeholder="Email (admin)">
+        <input id="adminPassword" type="password" class="editable-field" style="color:#ccc;border-color:#333;background:#0f0f0f;" placeholder="Contraseña">
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+        <button onclick="login()" class="px-4 py-3 rounded-lg font-bold" style="background:#e50914;color:#fff;">
+          Iniciar sesión
+        </button>
+        <button onclick="resetPassword()" class="px-4 py-3 rounded-lg font-bold" style="background:#333;color:#fff;">
+          ¿Olvidaste la contraseña?
+        </button>
+      </div>
+
+      <div id="adminError" class="mt-4 text-sm" style="color:#ff6b6b; display:none;"></div>
+      <div class="mt-4 text-xs" style="color:#666;">
+        Tip: el admin es el email configurado en el código.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================
+       CONFIG SUPABASE
+    ========================== */
+
+    const SUPABASE_URL = "https://jqczxqnvdaubpkwesbkw.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxY3p4cW52ZGF1YnBrd2VzYmt3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2NzQsImV4cCI6MjA4NjU3ODY3NH0.WKJ92FmjOBWUeXyMry82q4Z-Pd1lbutmtSTIIOV4tSY";
+    const ADMIN_EMAIL = "saphira.fujur@gmail.com";
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    /* =========================
+       CONSTANTES APP
+    ========================== */
+
+    const BINGO_CHALLENGES = [
+      { id: '1', icon: '📖', text: '+500 páginas' },
+      { id: '2', icon: '🏆', text: 'Premio literario' },
+      { id: '3', icon: '🌍', text: 'Otro continente' },
+      { id: '4', icon: '💔', text: 'Romance lloré' },
+      { id: '5', icon: '🎭', text: 'Obra teatro' },
+      { id: '6', icon: '👤', text: 'Biografía' },
+      { id: '7', icon: '🔮', text: 'Fantasía épica' },
+      { id: '8', icon: '🕵️', text: 'Misterio' },
+      { id: '9', icon: '📚', text: 'Clásico' },
+      { id: '10', icon: '🌈', text: 'LGBTQ+' },
+      { id: '11', icon: '🎨', text: 'Portada bella' },
+      { id: '12', icon: '🎧', text: 'Audiolibro' },
+      { id: '13', icon: '⭐', text: 'LIBRE' },
+      { id: '14', icon: '📱', text: 'Cómic' },
+      { id: '15', icon: '🌟', text: 'Debut' },
+      { id: '16', icon: '🎬', text: 'Adaptado' },
+      { id: '17', icon: '📰', text: 'No ficción' },
+      { id: '18', icon: '🏠', text: 'Mi país' },
+      { id: '19', icon: '🚀', text: 'Sci-Fi' },
+      { id: '20', icon: '📜', text: 'Poesía' },
+      { id: '21', icon: '🔄', text: 'Relectura' },
+      { id: '22', icon: '👥', text: 'Recomendado' },
+      { id: '23', icon: '🏅', text: 'Bestseller' },
+      { id: '24', icon: '🌙', text: '2026' },
+      { id: '25', icon: '📖', text: 'Saga' }
+    ];
+
+    const ACHIEVEMENTS = [
+      { id: 'bronze', icon: '🥉', text: 'Lector Bronce', goal: 10, type: 'books' },
+      { id: 'silver', icon: '🥈', text: 'Lector Plata', goal: 25, type: 'books' },
+      { id: 'gold', icon: '🥇', text: 'Lector Oro', goal: 50, type: 'books' },
+      { id: 'diamond', icon: '💎', text: 'Lector Diamante', goal: 100, type: 'books' },
+      { id: 'genres', icon: '🌟', text: 'Explorador de Géneros', goal: 5, type: 'genres' },
+      { id: 'bingo', icon: '🎯', text: 'Maestro del Bingo', goal: 25, type: 'bingo' },
+      { id: 'pages', icon: '📖', text: 'Devorador de Páginas', goal: 10000, type: 'pages' },
+      { id: 'international', icon: '🌍', text: 'Lector Internacional', goal: 5, type: 'countries' }
+    ];
+
+    const GOALS = [
+      { id: 'yearly', text: 'Leer ___ libros este año' },
+      { id: 'bingo', text: 'Completar el Bingo Literario' },
+      { id: 'monthly', text: 'Leer al menos 1 libro al mes' },
+      { id: 'genres', text: 'Explorar 3 géneros nuevos' },
+      { id: 'countries', text: 'Leer autores de 5 países diferentes' },
+      { id: 'reread', text: 'Releer mis 3 libros favoritos' },
+      { id: 'reviews', text: 'Escribir reseñas de todos los libros' }
+    ];
+
+    const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const DAYS_ES = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'];
+
+    /* =========================
+       ESTADO
+    ========================== */
+
+    let appData = {
+      books: [],
+      bingo: {},
+      achievements: {},
+      goals: {},
+      stats: { books: 0, pages: 0, avgRating: 0 },
+      reflections: {},
+      lists: { buyList: [], libraryList: [], giftList: [] },
+      top10: Array(10).fill(""),
+      quotes: {}
+    };
+
+    let editingBookId = null;
+    let currentCalendarMonth = new Date().getMonth();
+    let currentCalendarYear = new Date().getFullYear();
+
+    let isAdmin = false;
+    let currentUserEmail = null;
+
+    /* =========================
+       ADMIN MODAL
+    ========================== */
+
+    function openAdminModal() {
+      document.getElementById("adminModalBackdrop").style.display = "flex";
+      document.getElementById("adminError").style.display = "none";
+    }
+
+    function closeAdminModal() {
+      document.getElementById("adminModalBackdrop").style.display = "none";
+    }
+
+    function showAdminError(msg) {
+      const el = document.getElementById("adminError");
+      el.textContent = msg;
+      el.style.display = "block";
+    }
+
+    /* =========================
+       AUTH (SUPABASE)
+    ========================== */
+
+    async function login() {
+      try {
+        const email = document.getElementById("adminEmail").value.trim();
+        const password = document.getElementById("adminPassword").value.trim();
+
+        if (!email || !password) {
+          showAdminError("Completa email y contraseña.");
+          return;
+        }
+
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+        if (error) {
+          showAdminError("Login incorrecto. Revisa email/contraseña.");
+          return;
+        }
+
+        currentUserEmail = data.user?.email || null;
+
+        if (currentUserEmail !== ADMIN_EMAIL) {
+          await supabaseClient.auth.signOut();
+          currentUserEmail = null;
+          showAdminError("Este usuario no es admin.");
+          return;
+        }
+
+        isAdmin = true;
+        closeAdminModal();
+        applyAdminUI();
+        await loadBooksFromSupabase();
+      } catch (e) {
+        showAdminError("Error inesperado al iniciar sesión.");
+        console.error(e);
+      }
+    }
+
+    async function logout() {
+      await supabaseClient.auth.signOut();
+      isAdmin = false;
+      currentUserEmail = null;
+      applyAdminUI();
+      await loadBooksFromSupabase();
+    }
+
+    async function resetPassword() {
+      try {
+        const email = document.getElementById("adminEmail").value.trim();
+
+        if (!email) {
+          showAdminError("Pon tu email para enviarte el reset.");
+          return;
+        }
+
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
+
+        if (error) {
+          showAdminError("No se pudo enviar el email de recuperación.");
+          return;
+        }
+
+        showAdminError("📩 Email enviado. Mira tu bandeja (y spam).");
+      } catch (e) {
+        showAdminError("Error enviando recuperación.");
+      }
+    }
+
+    function applyAdminUI() {
+      const addBtn = document.getElementById("adminAddBookButton");
+      const logoutBtn = document.getElementById("logoutBtn");
+      const status = document.getElementById("adminStatus");
+
+      if (isAdmin) {
+        addBtn.style.display = "block";
+        logoutBtn.style.display = "inline-block";
+        status.textContent = "Modo admin activado ✅";
+      } else {
+        addBtn.style.display = "none";
+        logoutBtn.style.display = "none";
+        status.textContent = "Modo visitante";
+        document.getElementById("addBookForm").style.display = "none";
+      }
+    }
+
+    /* =========================
+       CRUD SUPABASE (BOOKS)
+    ========================== */
+
+    async function loadBooksFromSupabase() {
+      const { data, error } = await supabaseClient
+        .from("books")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error cargando books:", error);
+        appData.books = [];
+      } else {
+        appData.books = (data || []).map(row => ({
+          id: row.id,
+          title: row.title || "",
+          author: row.author || "",
+          genre: row.genre || "",
+          pages: row.pages || 0,
+          date: row.date || "",
+          bingoIds: row.bingo_ids || [],
+          rating: row.rating || 0,
+          plot: row.plot || 0,
+          characters: row.characters || 0,
+          writing: row.writing || 0,
+          pace: row.pace || 0,
+          review: row.review || "",
+          quote: row.quote || "",
+
+          start_date: row.start_date || "",
+          end_date: row.end_date || "",
+          start_quote: row.start_quote || "",
+          end_quote: row.end_quote || "",
+          cover_url: row.cover_url || "",
+          canva_url: row.canva_url || ""
+        }));
+      }
+
+      recalcBingo();
+      updateStats();
+      initAllUI();
+    }
+
+    async function insertBookToSupabase(book) {
+      const payload = {
+        title: book.title,
+        author: book.author,
+        genre: book.genre,
+        pages: book.pages,
+        date: book.date,
+        bingo_ids: book.bingoIds,
+        rating: book.rating,
+        plot: book.plot,
+        characters: book.characters,
+        writing: book.writing,
+        pace: book.pace,
+        review: book.review,
+        quote: book.quote,
+
+        start_date: book.start_date,
+        end_date: book.end_date,
+        start_quote: book.start_quote,
+        end_quote: book.end_quote,
+        cover_url: book.cover_url,
+        canva_url: book.canva_url
+      };
+
+      const { error } = await supabaseClient.from("books").insert(payload);
+
+      if (error) {
+        alert("❌ No se pudo guardar el libro. ¿Estás logueada como admin?");
+        console.error(error);
+        return false;
+      }
+
+      return true;
+    }
+
+    async function updateBookInSupabase(id, book) {
+      const payload = {
+        title: book.title,
+        author: book.author,
+        genre: book.genre,
+        pages: book.pages,
+        date: book.date,
+        bingo_ids: book.bingoIds,
+        rating: book.rating,
+        plot: book.plot,
+        characters: book.characters,
+        writing: book.writing,
+        pace: book.pace,
+        review: book.review,
+        quote: book.quote,
+
+        start_date: book.start_date,
+        end_date: book.end_date,
+        start_quote: book.start_quote,
+        end_quote: book.end_quote,
+        cover_url: book.cover_url,
+        canva_url: book.canva_url
+      };
+
+      const { error } = await supabaseClient.from("books").update(payload).eq("id", id);
+
+      if (error) {
+        alert("❌ No se pudo actualizar el libro.");
+        console.error(error);
+        return false;
+      }
+
+      return true;
+    }
+
+    async function deleteBookFromSupabase(id) {
+      const { error } = await supabaseClient.from("books").delete().eq("id", id);
+
+      if (error) {
+        alert("❌ No se pudo borrar el libro.");
+        console.error(error);
+        return false;
+      }
+
+      return true;
+    }
+
+    /* =========================
+       UI + LÓGICA
+    ========================== */
+
+    function toggleBooksSection() {
+      const container = document.getElementById('booksListContainer');
+      const arrow = document.getElementById('booksToggleArrow');
+      if (container.style.display === 'none') {
+        container.style.display = 'block';
+        arrow.style.transform = 'rotate(0deg)';
+      } else {
+        container.style.display = 'none';
+        arrow.style.transform = 'rotate(-90deg)';
+      }
+    }
+
+    function initBingoCheckboxes() {
+      const container = document.getElementById('bingoCheckboxes');
+      container.innerHTML = BINGO_CHALLENGES.map(challenge => `
+        <label class="flex items-center gap-2 cursor-pointer p-2 rounded" style="margin: 0;">
+          <input type="checkbox" value="${challenge.id}" id="bingo-${challenge.id}" class="book-bingo-checkbox">
+          <span style="color: #fff; font-size: 0.9rem;">${challenge.icon} ${challenge.text}</span>
+        </label>
+      `).join('');
+    }
+
+    function toggleAddBookForm() {
+      if (!isAdmin) return;
+
+      const form = document.getElementById('addBookForm');
+      if (form.style.display === 'none') {
+        form.style.display = 'block';
+        clearBookForm();
+        editingBookId = null;
+        initBingoCheckboxes();
+      } else {
+        form.style.display = 'none';
+      }
+    }
+
+    function clearBookForm() {
+      document.getElementById('bookStartDate').value = '';
+      document.getElementById('bookEndDate').value = '';
+      document.getElementById('bookStartQuote').value = '';
+      document.getElementById('bookEndQuote').value = '';
+      document.getElementById('bookCoverUrl').value = '';
+      document.getElementById('bookCanvaUrl').value = '';
+
+      document.getElementById('bookTitle').value = '';
+      document.getElementById('bookAuthor').value = '';
+      document.getElementById('bookGenre').value = '';
+      document.getElementById('bookPages').value = '';
+      document.getElementById('bookDate').value = '';
+      document.getElementById('bookRating').value = '';
+      document.getElementById('bookPlot').value = '';
+      document.getElementById('bookCharacters').value = '';
+      document.getElementById('bookWriting').value = '';
+      document.getElementById('bookPace').value = '';
+      document.getElementById('bookReview').value = '';
+      document.getElementById('bookQuote').value = '';
+      document.querySelectorAll('.book-bingo-checkbox').forEach(cb => cb.checked = false);
+    }
+
+    async function saveBook() {
+      if (!isAdmin) {
+        alert("Solo el admin puede guardar libros.");
+        return;
+      }
+
+      const title = document.getElementById('bookTitle').value.trim();
+      const author = document.getElementById('bookAuthor').value.trim();
+
+      if (!title || !author) {
+        alert('Por favor completa el título y el autor');
+        return;
+      }
+
+      const selectedBingoIds = Array.from(document.querySelectorAll('.book-bingo-checkbox:checked')).map(cb => cb.value);
+
+      const book = {
+        title,
+        author,
+        genre: document.getElementById('bookGenre').value,
+        pages: parseInt(document.getElementById('bookPages').value) || 0,
+        date: document.getElementById('bookDate').value,
+
+        start_date: document.getElementById('bookStartDate').value,
+        end_date: document.getElementById('bookEndDate').value,
+        start_quote: document.getElementById('bookStartQuote').value,
+        end_quote: document.getElementById('bookEndQuote').value,
+        cover_url: document.getElementById('bookCoverUrl').value,
+        canva_url: document.getElementById('bookCanvaUrl').value,
+
+        bingoIds: selectedBingoIds,
+        rating: parseFloat(document.getElementById('bookRating').value) || 0,
+        plot: parseFloat(document.getElementById('bookPlot').value) || 0,
+        characters: parseFloat(document.getElementById('bookCharacters').value) || 0,
+        writing: parseFloat(document.getElementById('bookWriting').value) || 0,
+        pace: parseFloat(document.getElementById('bookPace').value) || 0,
+        review: document.getElementById('bookReview').value,
+        quote: document.getElementById('bookQuote').value
+      };
+
+      if (editingBookId) {
+        const ok = await updateBookInSupabase(editingBookId, book);
+        if (!ok) return;
+      } else {
+        const ok = await insertBookToSupabase(book);
+        if (!ok) return;
+      }
+
+      await loadBooksFromSupabase();
+      toggleAddBookForm();
+    }
+
+    function cancelAddBook() {
+      toggleAddBookForm();
+    }
+
+    function editBook(id) {
+      if (!isAdmin) return;
+
+      const book = appData.books.find(b => b.id === id);
+      if (!book) return;
+
+      editingBookId = id;
+
+      document.getElementById('bookTitle').value = book.title;
+      document.getElementById('bookAuthor').value = book.author;
+      document.getElementById('bookGenre').value = book.genre || '';
+      document.getElementById('bookPages').value = book.pages || '';
+      document.getElementById('bookDate').value = book.date || '';
+
+      document.getElementById('bookStartDate').value = book.start_date || '';
+      document.getElementById('bookEndDate').value = book.end_date || '';
+      document.getElementById('bookStartQuote').value = book.start_quote || '';
+      document.getElementById('bookEndQuote').value = book.end_quote || '';
+      document.getElementById('bookCoverUrl').value = book.cover_url || '';
+      document.getElementById('bookCanvaUrl').value = book.canva_url || '';
+
+      document.getElementById('bookRating').value = book.rating || '';
+      document.getElementById('bookPlot').value = book.plot || '';
+      document.getElementById('bookCharacters').value = book.characters || '';
+      document.getElementById('bookWriting').value = book.writing || '';
+      document.getElementById('bookPace').value = book.pace || '';
+      document.getElementById('bookReview').value = book.review || '';
+      document.getElementById('bookQuote').value = book.quote || '';
+
+      initBingoCheckboxes();
+      if (book.bingoIds) {
+        book.bingoIds.forEach(bid => {
+          const checkbox = document.getElementById(`bingo-${bid}`);
+          if (checkbox) checkbox.checked = true;
+        });
+      }
+
+      document.getElementById('addBookForm').style.display = 'block';
+    }
+
+    async function deleteBook(id) {
+      if (!isAdmin) return;
+
+      if (confirm('¿Estás seguro de eliminar este libro?')) {
+        const ok = await deleteBookFromSupabase(id);
+        if (!ok) return;
+        await loadBooksFromSupabase();
+      }
+    }
+
+    function updateStats() {
+      if (!appData.books || appData.books.length === 0) {
+        appData.stats = { books: 0, pages: 0, avgRating: 0 };
+        return;
+      }
+
+      const totalBooks = appData.books.length;
+      const totalPages = appData.books.reduce((sum, book) => sum + (book.pages || 0), 0);
+      const totalRating = appData.books.reduce((sum, book) => sum + (book.rating || 0), 0);
+      const avgRating = totalBooks > 0 ? totalRating / totalBooks : 0;
+
+      appData.stats = { books: totalBooks, pages: totalPages, avgRating };
+    }
+
+    function recalcBingo() {
+      appData.bingo = {};
+      BINGO_CHALLENGES.forEach(challenge => {
+        const count = appData.books.filter(b => (b.bingoIds || []).includes(challenge.id)).length;
+        appData.bingo[challenge.id] = count > 0;
+      });
+    }
+
+    function initShelf() {
+      const grid = document.getElementById("shelfGrid");
+      if (!grid) return;
+
+      if (!appData.books || appData.books.length === 0) {
+        grid.innerHTML = `<div style="color:#666;">Aún no hay libros para mostrar.</div>`;
+        return;
+      }
+
+      grid.innerHTML = appData.books.map(book => {
+        const cover = book.cover_url ? escapeAttr(book.cover_url) : "";
+        const title = escapeHtml(book.title);
+        const author = escapeHtml(book.author);
+        const id = book.id;
+
+        const img = cover
+          ? `<img class="shelf-cover" src="${cover}" alt="Portada">`
+          : `<div class="shelf-cover flex items-center justify-center" style="color:#666;">Sin portada</div>`;
+
+        return `
+          <div class="shelf-item" onclick="scrollToBook('${id}')">
+            ${img}
+            <div class="shelf-meta">
+              <div class="shelf-title">${title}</div>
+              <div class="shelf-author">${author}</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function scrollToBook(id) {
+      const el = document.getElementById(`book-${id}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function initBooks() {
+      const container = document.getElementById('booksList');
+      const booksListContainer = document.getElementById('booksListContainer');
+
+      if (!appData.books || appData.books.length === 0) {
+        container.innerHTML = `
+          <div class="card stat-card text-center py-12">
+            <p style="color: #666; font-size: 1.2rem;">📚 Aún no has añadido ningún libro</p>
+            <p style="color: #666; margin-top: 0.5rem;">Entra como admin para añadir libros</p>
+          </div>
+        `;
+        booksListContainer.style.display = 'none';
+        return;
+      }
+
+      booksListContainer.style.display = 'block';
+
+      container.innerHTML = appData.books.map(book => {
+        const stars = '⭐'.repeat(Math.floor(book.rating || 0));
+
+        const bingoTags = (book.bingoIds || []).map(id => {
+          const challenge = BINGO_CHALLENGES.find(c => c.id === id);
+          return challenge
+            ? `<span class="px-3 py-1 rounded-full text-sm" style="background: #e50914; color: #fff;">${challenge.icon} ${challenge.text}</span>`
+            : '';
+        }).join('');
+
+        const coverHtml = book.cover_url
+          ? `<img src="${escapeAttr(book.cover_url)}" alt="Portada" class="w-24 h-36 object-cover rounded-lg border border-[#333]">`
+          : `<div class="w-24 h-36 rounded-lg border border-[#333] flex items-center justify-center" style="color:#666;">Sin portada</div>`;
+
+        const canvaHtml = book.canva_url
+          ? `<a href="${escapeAttr(book.canva_url)}" target="_blank" class="font-bold underline" style="color:#e50914;">🔗 Ver resumen en Canva</a>`
+          : ``;
+
+        const datesHtml = (book.start_date || book.end_date)
+          ? `<div class="text-sm mt-2" style="color:#aaa;">
+              ${book.start_date ? `📅 Inicio: <span style="color:#fff;">${escapeHtml(book.start_date)}</span>` : ''}
+              ${book.end_date ? ` · 🏁 Final: <span style="color:#fff;">${escapeHtml(book.end_date)}</span>` : ''}
+            </div>`
+          : ``;
+
+        const startQuoteHtml = book.start_quote
+          ? `<div class="mt-3 text-sm" style="color:#aaa;"><b style="color:#e50914;">✨ Frase inicio:</b> ${escapeHtml(book.start_quote)}</div>`
+          : ``;
+
+        const endQuoteHtml = book.end_quote
+          ? `<div class="mt-2 text-sm" style="color:#aaa;"><b style="color:#e50914;">🌙 Frase final:</b> ${escapeHtml(book.end_quote)}</div>`
+          : ``;
+
+        return `
+          <div class="card stat-card" id="book-${book.id}">
+            <div class="flex flex-col sm:flex-row gap-5">
+
+              <div class="shrink-0">
+                ${coverHtml}
+              </div>
+
+              <div class="flex-1">
+                <h3 class="text-2xl font-bold mb-2" style="color: #e50914;">${escapeHtml(book.title)}</h3>
+                <p class="text-lg mb-2" style="color: #fff;">por ${escapeHtml(book.author)}</p>
+
+                <div class="flex flex-wrap gap-2 mb-3">
+                  ${book.genre ? `<span class="px-3 py-1 rounded-full text-sm" style="background: #333; color: #fff;">${escapeHtml(book.genre)}</span>` : ''}
+                  ${book.pages ? `<span class="px-3 py-1 rounded-full text-sm" style="background: #333; color: #fff;">📄 ${book.pages} págs</span>` : ''}
+                  ${book.date ? `<span class="px-3 py-1 rounded-full text-sm" style="background: #333; color: #fff;">📅 ${escapeHtml(book.date)}</span>` : ''}
+                </div>
+
+                ${datesHtml}
+
+                ${canvaHtml ? `<div class="mt-3">${canvaHtml}</div>` : ''}
+
+                ${bingoTags ? `<div class="flex flex-wrap gap-2 mt-4">${bingoTags}</div>` : ''}
+
+                ${book.rating ? `<div class="mt-4"><span style="color: #e50914; font-size: 1.5rem;">${stars}</span> <span style="color: #fff;">${book.rating}/5</span></div>` : ''}
+
+                ${book.review ? `<p class="mt-4" style="color: #ccc; line-height: 1.6;">${escapeHtml(book.review)}</p>` : ''}
+
+                ${book.quote ? `<blockquote style="border-left: 4px solid #e50914; padding-left: 1rem; color: #aaa; font-style: italic; margin-top: 1rem;">"${escapeHtml(book.quote)}"</blockquote>` : ''}
+
+                ${startQuoteHtml}
+                ${endQuoteHtml}
+              </div>
+
+              ${isAdmin ? `
+                <div class="flex sm:flex-col gap-2">
+                  <button onclick="editBook('${book.id}')" class="px-4 py-2 rounded-lg font-bold" style="background: #333; color: #fff;">✏️ Editar</button>
+                  <button onclick="deleteBook('${book.id}')" class="px-4 py-2 rounded-lg font-bold" style="background: #333; color: #fff;">🗑️ Eliminar</button>
+                </div>
+              ` : ``}
+
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function initBingoGrid() {
+      const container = document.getElementById('bingoGrid');
+      container.innerHTML = BINGO_CHALLENGES.map(challenge => {
+        const booksCount = appData.books.filter(b => (b.bingoIds || []).includes(challenge.id)).length;
+        const completed = booksCount > 0;
+        return `
+          <div class="bingo-cell ${completed ? 'selected' : ''}" onclick="viewBingoBooks('${challenge.id}')" title="${challenge.text}">
+            ${completed ? `<div class="bingo-books-count">${booksCount}</div>` : ''}
+            <span class="text-3xl mb-2">${challenge.icon}</span>
+            <span class="text-xs text-center" style="color: #fff; line-height: 1.2;">${challenge.text}</span>
+            ${completed ? '<span class="text-lg mt-1 font-bold" style="color: #fff;">✓</span>' : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function viewBingoBooks(challengeId) {
+      const challenge = BINGO_CHALLENGES.find(c => c.id === challengeId);
+      const books = appData.books.filter(b => (b.bingoIds || []).includes(challengeId));
+
+      if (books.length === 0) {
+        alert(`No hay libros para el desafío: ${challenge.text}`);
+        return;
+      }
+
+      let booksList = books.map(book => `${book.title} - ${book.author}`).join('\n');
+      alert(`${challenge.icon} ${challenge.text}\n\n${booksList}`);
+    }
+
+    function initCalendar() {
+      renderCalendar(currentCalendarMonth, currentCalendarYear);
+      updateMonthStats();
+    }
+
+    function renderCalendar(month, year) {
+      const container = document.getElementById('calendarContainer');
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+      let html = `
+        <div class="calendar-header">
+          <button onclick="previousMonth()">← Anterior</button>
+          <h3 class="text-2xl font-bold" style="color: #e50914;">${MONTHS_ES[month]} ${year}</h3>
+          <button onclick="nextMonth()">Siguiente →</button>
+        </div>
+
+        <div class="weekdays">
+          ${DAYS_ES.map(day => `<div class="weekday">${day}</div>`).join('')}
+        </div>
+
+        <div class="calendar-grid">
+      `;
+
+      for (let i = daysInPrevMonth - firstDay + 1; i <= daysInPrevMonth; i++) {
+        html += `<div class="calendar-day other-month"><div class="day-number">${i}</div></div>`;
+      }
+
+      const today = new Date();
+      for (let i = 1; i <= daysInMonth; i++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        const booksOnDate = appData.books.filter(b => b.date === dateStr);
+        const isToday = today.getDate() === i && today.getMonth() === month && today.getFullYear() === year;
+
+        html += `
+          <div class="calendar-day ${isToday ? 'today' : ''} ${booksOnDate.length > 0 ? 'has-books' : ''}">
+            <div class="day-number">${i}</div>
+            ${booksOnDate.length > 0 ? `<div class="day-books-count">📚 ${booksOnDate.length}</div>` : ''}
+          </div>
+        `;
+      }
+
+      const remainingDays = 42 - (firstDay + daysInMonth);
+      for (let i = 1; i <= remainingDays; i++) {
+        html += `<div class="calendar-day other-month"><div class="day-number">${i}</div></div>`;
+      }
+
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    function previousMonth() {
+      currentCalendarMonth--;
+      if (currentCalendarMonth < 0) {
+        currentCalendarMonth = 11;
+        currentCalendarYear--;
+      }
+      renderCalendar(currentCalendarMonth, currentCalendarYear);
+      updateMonthStats();
+    }
+
+    function nextMonth() {
+      currentCalendarMonth++;
+      if (currentCalendarMonth > 11) {
+        currentCalendarMonth = 0;
+        currentCalendarYear++;
+      }
+      renderCalendar(currentCalendarMonth, currentCalendarYear);
+      updateMonthStats();
+    }
+
+    function updateMonthStats() {
+      const monthBooks = appData.books.filter(b => {
+        if (!b.date) return false;
+        const bookDate = new Date(b.date);
+        return bookDate.getMonth() === currentCalendarMonth && bookDate.getFullYear() === currentCalendarYear;
+      });
+
+      const monthPages = monthBooks.reduce((sum, b) => sum + (b.pages || 0), 0);
+      const monthAvgRating = monthBooks.length > 0
+        ? (monthBooks.reduce((sum, b) => sum + (b.rating || 0), 0) / monthBooks.length).toFixed(1)
+        : '0';
+
+      document.getElementById('monthBooksCount').textContent = monthBooks.length;
+      document.getElementById('monthPagesCount').textContent = monthPages;
+      document.getElementById('monthAvgRating').textContent = monthAvgRating;
+    }
+
+    function initAchievements() {
+      const container = document.getElementById('achievementsList');
+      container.innerHTML = ACHIEVEMENTS.map(achievement => {
+        const completed = appData.achievements[achievement.id] || false;
+        return `
+          <div class="checkbox-item" onclick="toggleAchievement('${achievement.id}')">
+            <div class="checkbox ${completed ? 'checked' : ''}">
+              ${completed ? '<span style="color: #fff; font-size: 16px;">✓</span>' : ''}
+            </div>
+            <span style="color: ${completed ? '#fff' : '#aaa'};">${achievement.icon} ${achievement.text}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleAchievement(id) {
+      appData.achievements[id] = !appData.achievements[id];
+      initAchievements();
+    }
+
+    function initGoals() {
+      const container = document.getElementById('goalsList');
+      container.innerHTML = GOALS.map(goal => {
+        const completed = appData.goals[goal.id] || false;
+        return `
+          <div class="checkbox-item" onclick="toggleGoal('${goal.id}')">
+            <div class="checkbox ${completed ? 'checked' : ''}">
+              ${completed ? '<span style="color: #fff; font-size: 16px;">✓</span>' : ''}
+            </div>
+            <span style="color: ${completed ? '#fff' : '#aaa'};">${goal.text}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleGoal(id) {
+      appData.goals[id] = !appData.goals[id];
+      initGoals();
+    }
+
+    function initLists() {
+      ['buyList', 'libraryList', 'giftList'].forEach(listId => {
+        const container = document.getElementById(listId);
+        const items = appData.lists[listId] || [];
+        container.innerHTML = items.map((item, index) => `
+          <div class="checkbox-item" onclick="toggleListItem('${listId}', ${index})">
+            <div class="checkbox ${item.checked ? 'checked' : ''}">
+              ${item.checked ? '<span style="color: #fff; font-size: 16px;">✓</span>' : ''}
+            </div>
+            <input
+              type="text"
+              value="${escapeAttr(item.text)}"
+              onchange="updateListItem('${listId}', ${index}, this.value)"
+              onclick="event.stopPropagation()"
+              class="editable-field flex-1"
+              style="color: #ccc; padding: 0.25rem;"
+              placeholder="Título del libro"
+            >
+            <button onclick="removeListItem('${listId}', ${index}); event.stopPropagation();" style="color: #e50914; padding: 0.25rem; background: none; border: none; cursor: pointer;">✕</button>
+          </div>
+        `).join('');
+      });
+    }
+
+    function addToList(listId) {
+      if (!appData.lists[listId]) appData.lists[listId] = [];
+      appData.lists[listId].push({ text: '', checked: false });
+      initLists();
+    }
+
+    function toggleListItem(listId, index) {
+      appData.lists[listId][index].checked = !appData.lists[listId][index].checked;
+      initLists();
+    }
+
+    function updateListItem(listId, index, value) {
+      appData.lists[listId][index].text = value;
+    }
+
+    function removeListItem(listId, index) {
+      appData.lists[listId].splice(index, 1);
+      initLists();
+    }
+
+    function initTop10() {
+      const container = document.getElementById('top10List');
+      if (!appData.top10) appData.top10 = Array(10).fill('');
+
+      container.innerHTML = appData.top10.map((item, index) => `
+        <div class="flex items-center gap-3">
+          <span class="text-2xl font-bold" style="color: #e50914; width: 40px;">${index + 1}.</span>
+          <input
+            type="text"
+            value="${escapeAttr(item)}"
+            onchange="updateTop10(${index}, this.value)"
+            class="editable-field flex-1"
+            style="color: #ccc;"
+            placeholder="Título del libro"
+          >
+        </div>
+      `).join('');
+    }
+
+    function updateTop10(index, value) {
+      appData.top10[index] = value;
+    }
+
+    function initReflections() {
+      ['favoriteBook', 'biggestSurprise', 'biggestDisappointment', 'discovery'].forEach(id => {
+        const element = document.getElementById(id);
+        element.value = appData.reflections[id] || '';
+        element.addEventListener('change', () => {
+          appData.reflections[id] = element.value;
+        });
+      });
+    }
+
+    function initQuotes() {
+      ['quote1', 'quote2', 'quote3'].forEach(id => {
+        const element = document.getElementById(id);
+        element.value = appData.quotes[id] || '';
+        element.addEventListener('change', () => {
+          appData.quotes[id] = element.value;
+        });
+      });
+    }
+
+    function updateDashboard() {
+      const bingoCompleted = Object.values(appData.bingo).filter(v => v).length;
+
+      document.getElementById('booksCount').textContent = appData.stats.books || 0;
+      document.getElementById('pagesCount').textContent = appData.stats.pages || 0;
+      document.getElementById('avgRating').textContent = (appData.stats.avgRating || 0).toFixed(1);
+      document.getElementById('bingoProgress').textContent = `${bingoCompleted}/25`;
+    }
+
+    function initAllUI() {
+      initShelf();
+      initBingoGrid();
+      initAchievements();
+      initGoals();
+      initLists();
+      initTop10();
+      initReflections();
+      initQuotes();
+      initBooks();
+      initCalendar();
+      updateDashboard();
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function escapeAttr(str) {
+      return escapeHtml(str).replaceAll("\n", " ");
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      applyAdminUI();
+
+      const { data } = await supabaseClient.auth.getSession();
+      const email = data.session?.user?.email || null;
+
+      if (email && email === ADMIN_EMAIL) {
+        isAdmin = true;
+        currentUserEmail = email;
+      } else {
+        isAdmin = false;
+        currentUserEmail = null;
+      }
+
+      applyAdminUI();
+
+      if (window.location.hash === "#admin" && !isAdmin) {
+        openAdminModal();
+      }
+
+      await loadBooksFromSupabase();
+    });
+  </script>
+
+</body>
+</html>
